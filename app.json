@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "Neocaching",
+    "slug": "neocaching",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.salemstanley.neocaching"
+    },
+    "android": {
+      "package": "com.salemstanley.neocaching",
+      "adaptiveIcon": {
+        "backgroundColor": "#1B1035",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Neocaching uses your camera to show the checkpoint star in the world around you.",
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Neocaching checks that you are standing next to a checkpoint before it unlocks."
+        }
+      ],
+      [
+        "react-native-nfc-manager",
+        {
+          "nfcPermission": "Neocaching reads the checkpoint tags you tap."
+        }
+      ]
+    ]
+  }
+}
