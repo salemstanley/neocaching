@@ -21,10 +21,11 @@ You need 6 NTAG215 tags: 5 checkpoints and 1 final boss.
 ## How a game works
 
 - Tap **Start game**. The clock starts.
-- Find the checkpoints in any order. Tap **Tap a checkpoint tag** and hold your phone to the tag.
+- Find the tags in order: Start, then 1 to 4. After each challenge you get a clue to the next tag. If you're stuck, **Use the compass** shows how far away it is and which way to go.
+- Tap **Tap a checkpoint tag** and hold your phone to the tag.
 - If you're close enough (about 30 meters), a star appears through your camera. Tap it to catch it.
 - Read the next part of the story and beat the mini-game. Losing adds 30 seconds to your time.
-- After all 5 checkpoints, the final boss tag unlocks. Beat it to finish and save your time.
+- Tag 5 is the final boss. Beat it to finish and save your time.
 
 ## Games
 

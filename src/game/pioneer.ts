@@ -11,6 +11,8 @@ export const pioneerGame: Game = {
   intro:
     'December 1861. Your wagon creaks to a stop below the red cliffs. You and the other families have been sent south to grow cotton in this hot, dry valley. ' +
     'Old Hiram, the wagon master, hands you a worn leather journal. "Five tasks stand between us and a real town," he says. "Find each one, and be quick about it. Winter rains are coming."',
+  startClue:
+    'Hiram taps the first page of the journal. "Every journey starts somewhere. Find the tag marked Start and tap it to begin."',
   ending:
     'The water drops away. The ditches held, the stone walls stand, and the first cotton is safe in the barn. Hiram closes the journal and grins. "Welcome home to Dixie."',
   checkpoints: [
@@ -21,6 +23,8 @@ export const pioneerGame: Game = {
         'You climb the black lava ridge to look over the valley. Hiram quizzes you on what you have heard about this new place. "A settler should know where they stand," he says.',
       winText: 'Hiram nods. "You will do fine here." The first page of the journal is filled.',
       loseText: 'Hiram chuckles. "You will learn." You lose a little time setting up camp.',
+      clue:
+        'Hiram points across the valley. "The cotton field is next. Follow the path the wagons took, and look for Tag 1."',
       miniGame: {
         kind: 'trivia',
         questions: [
@@ -44,6 +48,8 @@ export const pioneerGame: Game = {
         'The first bolls have burst open and a storm is rolling in. Every bit of cotton left in the field will be ruined. Pick as fast as you can!',
       winText: 'Your sack is full just as the first drops fall.',
       loseText: 'The rain beats you to the last rows. Some of the crop is lost.',
+      clue:
+        'A stonecutter waves from the far side of camp. "We need hands at the quarry! Head out and find Tag 2."',
       miniGame: { kind: 'speedTap', taps: 30, seconds: 10, label: 'Tap to pick cotton' },
     },
     {
@@ -53,6 +59,8 @@ export const pioneerGame: Game = {
         'The town needs stone for its buildings. The quarry crew left their tools in a jumble. Match the pairs so work can start before sundown.',
       winText: 'Every tool is back in its place. The stonecutters get to work.',
       loseText: 'The sun sets before the tools are sorted. Work starts late tomorrow.',
+      clue:
+        'You hear shovels in the distance. The ditch diggers are calling for help. Follow the sound to Tag 3.',
       miniGame: { kind: 'memory', symbols: ['⛏️', '🔨', '🪨', '🪵', '🐂', '🌵'], seconds: 60 },
     },
     {
@@ -62,6 +70,8 @@ export const pioneerGame: Game = {
         'Nothing grows here without water. The settlers are digging ditches from the river to the fields, and the ditch boss wants to know you understand the land.',
       winText: 'Water trickles down the new ditch toward the fields. The valley turns green.',
       loseText: 'The ditch runs the wrong way and has to be dug again.',
+      clue:
+        'The town is gathering on the hill to plan the temple. Climb up and find Tag 4.',
       miniGame: {
         kind: 'trivia',
         questions: [
@@ -85,6 +95,8 @@ export const pioneerGame: Game = {
         'Years from now a great white temple will stand here. For today, the town gathers to plan it. An old surveyor tests your memory of the town\'s history.',
       winText: 'The surveyor tips his hat. "You know this town better than most."',
       loseText: 'The surveyor sighs and repeats the lesson. Time slips away.',
+      clue:
+        'Thunder rolls. The sky goes dark and the river is rising fast! Race to Tag 5 to face the flood.',
       miniGame: {
         kind: 'trivia',
         questions: [

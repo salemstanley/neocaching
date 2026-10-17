@@ -26,6 +26,9 @@ export type Checkpoint = {
   // Shown after the mini-game, win or lose.
   winText: string;
   loseText: string;
+  // Shown after the mini-game: points the player toward the next tag and moves
+  // the story along. The final boss has none.
+  clue?: string;
   miniGame: MiniGame;
 };
 
@@ -34,10 +37,12 @@ export type Game = {
   title: string;
   tagline: string;
   intro: string;
+  // Leads the player to the first tag.
+  startClue: string;
   ending: string;
   // Seconds added to the clock when a mini-game is lost.
   penaltySeconds: number;
-  checkpoints: Checkpoint[]; // cp1..cp5 then boss, in that order
+  checkpoints: Checkpoint[]; // cp1..cp5 then boss, in the order players must find them
   starColor: string;
 };
 

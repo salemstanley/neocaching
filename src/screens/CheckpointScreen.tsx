@@ -3,6 +3,7 @@ import { Checkpoint, Game } from '../game/types';
 import { MemoryMatch } from '../components/minigames/MemoryMatch';
 import { SpeedTap } from '../components/minigames/SpeedTap';
 import { Trivia } from '../components/minigames/Trivia';
+import { ClueCard } from '../components/ClueCard';
 import { StarAR } from '../components/StarAR';
 import { Body, Button, Card, Screen, Title, colors } from '../components/ui';
 
@@ -31,6 +32,7 @@ export function CheckpointScreen({
   };
 
   const mg = checkpoint.miniGame;
+  const nextTag = game.checkpoints[game.checkpoints.indexOf(checkpoint) + 1]?.tag;
   return (
     <Screen>
       <Title>{checkpoint.title}</Title>
@@ -57,6 +59,7 @@ export function CheckpointScreen({
             </Body>
             <Body>{won ? checkpoint.winText : checkpoint.loseText}</Body>
           </Card>
+          {checkpoint.clue && nextTag && <ClueCard clue={checkpoint.clue} nextTag={nextTag} />}
           <Button title="Continue" onPress={() => onDone(won)} />
         </>
       )}
