@@ -43,3 +43,14 @@ export type Game = {
 
 // Where each tag is stuck in the real world. One set per location (loop).
 export type SpotLocation = { latitude: number; longitude: number };
+
+// The name written on each physical tag sticker, shown in the app so players
+// know which tag is which.
+export const TAG_LABELS: Record<TagCode, string> = {
+  cp1: 'Tag "Start"',
+  cp2: 'Tag 1',
+  cp3: 'Tag 2',
+  cp4: 'Tag 3',
+  cp5: 'Tag 4',
+  boss: 'Tag 5 (final boss)',
+};

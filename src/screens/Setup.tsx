@@ -1,19 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Switch, TextInput, View } from 'react-native';
-import { TAG_CODES, TagCode } from '../game/types';
+import { TAG_CODES, TAG_LABELS as LABELS, TagCode } from '../game/types';
 import { getHere } from '../lib/location';
 import { cancelScan, nfcStatus, writeTagCode } from '../lib/nfc';
 import { Settings, Spots, loadSettings, loadSpots, saveSettings, saveSpots } from '../lib/storage';
 import { Body, Button, Card, Screen, Title, colors } from '../components/ui';
 
-const LABELS: Record<TagCode, string> = {
-  cp1: 'Checkpoint 1',
-  cp2: 'Checkpoint 2',
-  cp3: 'Checkpoint 3',
-  cp4: 'Checkpoint 4',
-  cp5: 'Checkpoint 5',
-  boss: 'Final boss',
-};
 
 // Walk your loop with the tags: write each tag, stick it up, then save the spot.
 export function Setup({ onBack }: { onBack: () => void }) {

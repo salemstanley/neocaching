@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
-import { Game, TagCode } from '../game/types';
+import { Game, TAG_LABELS, TagCode } from '../game/types';
 import { checkNearby } from '../lib/location';
 import { cancelScan, nfcStatus, readTagCode } from '../lib/nfc';
 import { Run, formatTime, loadSettings, loadSpots, runSeconds } from '../lib/storage';
@@ -81,7 +81,8 @@ export function Play({
           const done = run.done.includes(cp.tag);
           return (
             <Body key={cp.tag} style={{ color: done ? colors.good : colors.text }}>
-              {done ? '✅' : cp.tag === 'boss' ? '👑' : '⭐'} {cp.title}
+              {done ? '✅' : cp.tag === 'boss' ? '👑' : '⭐'} {cp.title}{' '}
+              <Body style={{ color: colors.muted, fontSize: 14 }}>({TAG_LABELS[cp.tag]})</Body>
             </Body>
           );
         })}
@@ -90,7 +91,7 @@ export function Play({
       {scanning ? (
         <Card style={{ alignItems: 'center' }}>
           <ActivityIndicator color={colors.gold} size="large" />
-          <Body>Hold the back of your phone against a checkpoint tag…</Body>
+          <Body>Hold the back of your phone against a tag…</Body>
           <Button kind="secondary" title="Cancel" onPress={stop} />
         </Card>
       ) : (
