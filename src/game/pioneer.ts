@@ -24,7 +24,7 @@ export const pioneerGame: Game = {
       winText: 'Hiram nods. "You will do fine here." The first page of the journal is filled.',
       loseText: 'Hiram chuckles. "You will learn." You lose a little time setting up camp.',
       clue:
-        'Hiram points across the valley. "The cotton field is next. Follow the path the wagons took, and look for Tag 1."',
+        'Hiram points across the valley. "Before we plant cotton, we clear the stones from the field. Start with the rocks right where you rest your own wagon at night." Tag 1 hides among them.',
       miniGame: {
         kind: 'trivia',
         questions: [
@@ -49,7 +49,7 @@ export const pioneerGame: Game = {
       winText: 'Your sack is full just as the first drops fall.',
       loseText: 'The rain beats you to the last rows. Some of the crop is lost.',
       clue:
-        'A stonecutter waves from the far side of camp. "We need hands at the quarry! Head out and find Tag 2."',
+        'A stonecutter waves you over. "The quarry crew keeps to the shade. Find the tallest palm standing guard beside the building, and look behind it." Tag 2 is waiting there.',
       miniGame: { kind: 'speedTap', taps: 30, seconds: 10, label: 'Tap to pick cotton' },
     },
     {
@@ -60,7 +60,7 @@ export const pioneerGame: Game = {
       winText: 'Every tool is back in its place. The stonecutters get to work.',
       loseText: 'The sun sets before the tools are sorted. Work starts late tomorrow.',
       clue:
-        'You hear shovels in the distance. The ditch diggers are calling for help. Follow the sound to Tag 3.',
+        'The wagon master raises a hand. "Every team halts before the ditch crossing. Look for the red sign that tells wagons to stop." Tag 3 is on it.',
       miniGame: { kind: 'memory', symbols: ['⛏️', '🔨', '🪨', '🪵', '🐂', '🌵'], seconds: 60 },
     },
     {
@@ -71,7 +71,7 @@ export const pioneerGame: Game = {
       winText: 'Water trickles down the new ditch toward the fields. The valley turns green.',
       loseText: 'The ditch runs the wrong way and has to be dug again.',
       clue:
-        'The town is gathering on the hill to plan the temple. Climb up and find Tag 4.',
+        '"Water is life in Dixie," the ditch boss says. "Find the box that tells the water where to go. It sits near the hoop where the youngsters play." Tag 4 is on that box.',
       miniGame: {
         kind: 'trivia',
         questions: [
@@ -96,7 +96,7 @@ export const pioneerGame: Game = {
       winText: 'The surveyor tips his hat. "You know this town better than most."',
       loseText: 'The surveyor sighs and repeats the lesson. Time slips away.',
       clue:
-        'Thunder rolls. The sky goes dark and the river is rising fast! Race to Tag 5 to face the flood.',
+        'Thunder rolls and the river is rising fast! The flood is sweeping everything toward the walls where the town keeps its rubbish. Race to the outside of the nearest one. Tag 5 is where you make your stand.',
       miniGame: {
         kind: 'trivia',
         questions: [
