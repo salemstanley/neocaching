@@ -12,6 +12,7 @@ export function Home({
   onResume,
   onEdit,
   onNewCourse,
+  onWizard,
   onImported,
   onLeaderboard,
   onSetup,
@@ -23,6 +24,7 @@ export function Home({
   onResume: () => void;
   onEdit: (game: Game) => void;
   onNewCourse: () => void;
+  onWizard: () => void;
   onImported: (game: Game) => void;
   onLeaderboard: () => void;
   onSetup: () => void;
@@ -67,7 +69,8 @@ export function Home({
         </Card>
       ))}
 
-      <Button title="➕ Make a new course" onPress={onNewCourse} />
+      <Button title="✨ Course wizard (Claude writes it)" onPress={onWizard} />
+      <Button kind="secondary" title="➕ Make a course myself" onPress={onNewCourse} />
       {importing ? (
         <Card>
           <Body>Paste the course message someone sent you:</Body>

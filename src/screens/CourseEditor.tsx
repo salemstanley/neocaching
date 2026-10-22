@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Pressable, Switch, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, Text, TextInput, View } from 'react-native';
 import { Checkpoint, Game, MiniGame, MiniGameKind, SpotLocation, TAG_LABELS, TagCode, TriviaQuestion } from '../game/types';
 import { getHere } from '../lib/location';
 import { shareCourse } from '../lib/share';
 import { Spots, deleteCustomCourse, loadSpots, saveCustomCourse, saveSpots } from '../lib/storage';
+import { Chip, Field, Toggle, inputStyle } from '../components/form';
 import { MapPicker } from '../components/MapPicker';
 import { Body, Button, Card, Screen, Title, colors } from '../components/ui';
 
@@ -289,68 +290,5 @@ function ChallengeFields({ game, onChange }: { game: MiniGame; onChange: (g: Min
         onPress={() => onChange({ ...game, questions: [...game.questions, { question: '', answers: ['', '', '', ''], correctIndex: 0 }] })}
       />
     </>
-  );
-}
-
-const inputStyle = { backgroundColor: colors.bg, color: colors.text, fontSize: 16, borderRadius: 10, padding: 10 };
-
-function Field({
-  label,
-  value,
-  onChange,
-  multiline,
-  numeric,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  multiline?: boolean;
-  numeric?: boolean;
-  placeholder?: string;
-}) {
-  return (
-    <View style={{ gap: 4 }}>
-      <Body style={{ color: colors.muted, fontSize: 14 }}>{label}</Body>
-      <TextInput
-        value={value}
-        onChangeText={onChange}
-        multiline={multiline}
-        keyboardType={numeric ? 'number-pad' : 'default'}
-        placeholder={placeholder}
-        placeholderTextColor={colors.muted}
-        style={[inputStyle, multiline && { minHeight: 70, textAlignVertical: 'top' }]}
-      />
-    </View>
-  );
-}
-
-function Toggle({ label, hint, value, onChange }: { label: string; hint?: string; value: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-      <View style={{ flex: 1 }}>
-        <Body>{label}</Body>
-        {hint && <Body style={{ color: colors.muted, fontSize: 14 }}>{hint}</Body>}
-      </View>
-      <Switch value={value} onValueChange={onChange} trackColor={{ true: colors.gold }} />
-    </View>
-  );
-}
-
-function Chip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={{
-        borderRadius: 20,
-        paddingVertical: 8,
-        paddingHorizontal: 14,
-        backgroundColor: selected ? colors.gold : 'transparent',
-        borderWidth: 2,
-        borderColor: selected ? colors.gold : colors.muted,
-      }}
-    >
-      <Text style={{ color: selected ? colors.bg : colors.text, fontWeight: '700' }}>{label}</Text>
-    </Pressable>
   );
 }

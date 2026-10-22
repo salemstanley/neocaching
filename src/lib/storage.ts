@@ -4,7 +4,8 @@ import { Game, SpotLocation, TagCode } from '../game/types';
 // points is missing on scores saved before points existed.
 export type Score = { name: string; gameId: string; seconds: number; points?: number; date: string };
 export type Spots = Partial<Record<TagCode, SpotLocation>>;
-export type Settings = { skipGps: boolean; playerName: string };
+// anthropicKey lets the course wizard ask Claude to write courses. It stays on this phone.
+export type Settings = { skipGps: boolean; playerName: string; anthropicKey: string };
 
 const KEYS = { scores: 'scores', settings: 'settings', courses: 'courses' };
 
@@ -53,7 +54,7 @@ export async function deleteCustomCourse(id: string) {
   await AsyncStorage.removeItem(`spots:${id}`);
 }
 
-export const loadSettings = () => load<Settings>(KEYS.settings, { skipGps: false, playerName: '' });
+export const loadSettings = () => load<Settings>(KEYS.settings, { skipGps: false, playerName: '', anthropicKey: '' });
 export const saveSettings = (s: Settings) => AsyncStorage.setItem(KEYS.settings, JSON.stringify(s));
 
 export const loadScores = () => loadList<Score>(KEYS.scores);

@@ -8,7 +8,7 @@ import { Body, Button, Card, Screen, Title, colors } from '../components/ui';
 // Write the 6 physical tags (they work with every course) and change settings.
 // Where each tag is hidden is set per course, in the course editor.
 export function Setup({ onBack }: { onBack: () => void }) {
-  const [settings, setSettings] = useState<Settings>({ skipGps: false, playerName: '' });
+  const [settings, setSettings] = useState<Settings>({ skipGps: false, playerName: '', anthropicKey: '' });
   const [busy, setBusy] = useState<TagCode | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -73,6 +73,23 @@ export function Setup({ onBack }: { onBack: () => void }) {
           placeholderTextColor={colors.muted}
           maxLength={20}
           style={{ backgroundColor: colors.bg, color: colors.text, fontSize: 18, borderRadius: 12, padding: 12 }}
+        />
+      </Card>
+
+      <Card>
+        <Body style={{ fontWeight: '800' }}>Claude API key (for the course wizard)</Body>
+        <Body style={{ color: colors.muted, fontSize: 14 }}>
+          Lets the app ask Claude to write a story, clues and games for you. Get a key at console.anthropic.com. It stays on this phone and is never shared with a course.
+        </Body>
+        <TextInput
+          value={settings.anthropicKey}
+          onChangeText={(t) => updateSettings({ ...settings, anthropicKey: t.trim() })}
+          placeholder="sk-ant-..."
+          placeholderTextColor={colors.muted}
+          secureTextEntry
+          autoCapitalize="none"
+          autoCorrect={false}
+          style={{ backgroundColor: colors.bg, color: colors.text, fontSize: 16, borderRadius: 12, padding: 12 }}
         />
       </Card>
 

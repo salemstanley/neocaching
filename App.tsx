@@ -20,6 +20,7 @@ import {
 } from './src/lib/storage';
 import { CheckpointScreen } from './src/screens/CheckpointScreen';
 import { CourseEditor } from './src/screens/CourseEditor';
+import { CourseWizard } from './src/screens/CourseWizard';
 import { Finish } from './src/screens/Finish';
 import { Home } from './src/screens/Home';
 import { Leaderboard } from './src/screens/Leaderboard';
@@ -34,7 +35,8 @@ type View =
   | { name: 'leaderboard' }
   | { name: 'setup' }
   | { name: 'demo' }
-  | { name: 'edit'; course: Game };
+  | { name: 'edit'; course: Game }
+  | { name: 'wizard' };
 
 export default function App() {
   const [view, setView] = useState<View>({ name: 'home' });
@@ -115,6 +117,17 @@ export default function App() {
     screen = <Setup onBack={home} />;
   } else if (view.name === 'demo') {
     screen = <StarAR color={colors.gold} onCaught={home} />;
+  } else if (view.name === 'wizard') {
+    screen = (
+      <CourseWizard
+        onCreated={async (course) => {
+          await refreshCourses();
+          setView({ name: 'edit', course });
+        }}
+        onOpenSettings={() => setView({ name: 'setup' })}
+        onBack={home}
+      />
+    );
   } else if (view.name === 'edit') {
     screen = (
       <CourseEditor
@@ -136,6 +149,7 @@ export default function App() {
         courses={courses}
         run={run}
         onEdit={(course) => setView({ name: 'edit', course })}
+        onWizard={() => setView({ name: 'wizard' })}
         onNewCourse={async () => {
           const course = newCourse();
           await saveCustomCourse(course);

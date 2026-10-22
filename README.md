@@ -18,7 +18,16 @@ You need 6 NTAG215 tags: Start, 1, 2, 3, 4 and 5 (the final boss).
 2. Tap each button and hold the matching blank tag to the back of your phone, near the camera.
 3. The same 6 tags work with every course, so you can move them anywhere.
 
-## Make a course
+## Let Claude write a course
+
+1. Get a Claude API key at console.anthropic.com (add a few dollars of credit). Paste it under **Write tags and settings**. It stays on your phone.
+2. Tap **Course wizard**. Say who's playing, the occasion and a story idea.
+3. For each tag, describe where it's hidden, tap **I'm here** (or **Pick on map**), add an optional activity, and choose a challenge or **Surprise me**.
+4. Tap **Write my adventure**. Claude writes the story, clues and challenges, and the course opens in the editor so you can change anything.
+
+Your answers are saved as you go, so you can fill it in while walking around hiding tags.
+
+## Make a course yourself
 
 1. Tap **Make a new course**. It starts with sample stops you can change.
 2. Fill in the story, then tap each tag to open it. Pick a challenge: trivia, speed tap, memory match, or a **real-world activity** like "eat dinner here".
