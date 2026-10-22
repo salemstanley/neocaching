@@ -49,7 +49,7 @@ export const pioneerGame: Game = {
       winText: 'Your sack is full just as the first drops fall.',
       loseText: 'The rain beats you to the last rows. Some of the crop is lost.',
       clue:
-        'A stonecutter waves you over. "The quarry crew keeps to the shade. Find the tallest palm standing guard beside the building, and look behind it." Tag 2 is waiting there.',
+        'A stonecutter waves you over. "The quarry crew keeps to the shade. Find the smallest palm beside the building, and look behind it." Tag 2 is waiting there.',
       miniGame: { kind: 'speedTap', taps: 30, seconds: 10, label: 'Tap to pick cotton' },
     },
     {
