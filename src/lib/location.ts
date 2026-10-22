@@ -35,24 +35,24 @@ export async function checkNearby(spot: SpotLocation | undefined): Promise<Nearb
   return distance <= UNLOCK_RADIUS_M + slack ? { ok: true, distance } : { ok: false, distance };
 }
 
-const DIRECTIONS = ['north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'west', 'northwest'];
-
-// Compass direction from a to b, e.g. "northeast".
-export function directionTo(a: SpotLocation, b: SpotLocation): string {
+// Compass bearing from a to b in degrees, 0 = north, 90 = east.
+export function bearingDeg(a: SpotLocation, b: SpotLocation): number {
   const rad = (d: number) => (d * Math.PI) / 180;
   const y = Math.sin(rad(b.longitude - a.longitude)) * Math.cos(rad(b.latitude));
   const x =
     Math.cos(rad(a.latitude)) * Math.sin(rad(b.latitude)) -
     Math.sin(rad(a.latitude)) * Math.cos(rad(b.latitude)) * Math.cos(rad(b.longitude - a.longitude));
-  const bearing = ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
-  return DIRECTIONS[Math.round(bearing / 45) % 8];
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 }
 
-// A plain-language hint like "About 85 m to the northeast."
-export async function compassHint(spot: SpotLocation | undefined): Promise<string> {
-  if (!spot) return "This tag's spot hasn't been saved yet, so the compass can't help with it.";
-  const here = await getHere();
-  const d = distanceM(here.coords, spot);
-  if (d <= UNLOCK_RADIUS_M) return "You're right on top of it! Look around.";
-  return `About ${Math.round(d / 5) * 5} m to the ${directionTo(here.coords, spot)}.`;
+// Moves from a point by a distance (meters) along a bearing (degrees).
+// Flat-earth math is plenty accurate over a few hundred meters.
+export function offsetBy(from: SpotLocation, meters: number, bearing: number): SpotLocation {
+  const rad = (bearing * Math.PI) / 180;
+  const north = meters * Math.cos(rad);
+  const east = meters * Math.sin(rad);
+  return {
+    latitude: from.latitude + north / 111320,
+    longitude: from.longitude + east / (111320 * Math.cos((from.latitude * Math.PI) / 180)),
+  };
 }

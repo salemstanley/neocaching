@@ -1,40 +1,133 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
-import { Game, TAG_LABELS, TagCode } from '../game/types';
-import { checkNearby } from '../lib/location';
+import * as Location from 'expo-location';
+import { useKeepAwake } from 'expo-keep-awake';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Switch, Text, View } from 'react-native';
+import { POINTS, withArrow } from '../game/scoring';
+import { Game, SpotLocation, TAG_LABELS, TagCode } from '../game/types';
+import { COIN_RADIUS_M, coinsForLeg } from '../lib/coins';
+import { checkNearby, distanceM } from '../lib/location';
 import { cancelScan, nfcStatus, readTagCode } from '../lib/nfc';
-import { Run, formatTime, loadSettings, loadSpots, runSeconds } from '../lib/storage';
+import { useGameSounds } from '../lib/sounds';
+import { Run, Spots, formatTime, loadSettings, loadSpots, runSeconds } from '../lib/storage';
+import { CacheMap, MapCache } from '../components/CacheMap';
 import { ClueCard } from '../components/ClueCard';
+import { DirectionArrow } from '../components/DirectionArrow';
 import { Body, Button, Card, Screen, Title, colors } from '../components/ui';
 
 export function Play({
   game,
   run,
+  onRunChange,
   onCheckpoint,
   onQuit,
 }: {
   game: Game;
   run: Run;
+  onRunChange: (run: Run) => void;
   onCheckpoint: (tag: TagCode) => void;
   onQuit: () => void;
 }) {
+  useKeepAwake(); // keep the screen on while walking the loop
   const [now, setNow] = useState(Date.now());
   const [scanning, setScanning] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [spots, setSpots] = useState<Spots>({});
+  const [me, setMe] = useState<SpotLocation | null>(null);
+  const [heading, setHeading] = useState<number | null>(null);
+  const [showMap, setShowMap] = useState(false);
+  const [popup, setPopup] = useState<{ text: string; good: boolean } | null>(null);
+  const { playCoin, playWarning } = useGameSounds();
 
   // Tags must be found in order. The clue for the next tag comes from the one
   // before it (or the game's start clue).
   const nextIndex = game.checkpoints.findIndex((c) => !run.done.includes(c.tag));
   const next = game.checkpoints[nextIndex];
-  const clue = nextIndex === 0 ? game.startClue : game.checkpoints[nextIndex - 1].clue;
+  const prev = game.checkpoints[nextIndex - 1];
+  const clue = nextIndex === 0 ? game.startClue : prev?.clue;
+  const arrowOn = !!next && run.arrowLegs.includes(next.tag);
+
+  // Coins only exist between two tags whose spots are saved.
+  const coins = useMemo(() => {
+    const from = prev && spots[prev.tag];
+    const to = next && spots[next.tag];
+    return next && from && to ? coinsForLeg(next.tag, from, to) : [];
+  }, [prev, next, spots]);
+
+  // The location callback outlives renders, so it reads the latest values here.
+  const latest = useRef({ run, coins, arrowOn, onRunChange, playCoin, playWarning });
+  latest.current = { run, coins, arrowOn, onRunChange, playCoin, playWarning };
 
   useEffect(() => {
+    loadSpots().then(setSpots);
     const id = setInterval(() => setNow(Date.now()), 500);
     return () => {
       clearInterval(id);
       cancelScan();
     };
   }, []);
+
+  // Follow the player's position and pick up any coins they walk over.
+  useEffect(() => {
+    let sub: Location.LocationSubscription | undefined;
+    let cancelled = false;
+    (async () => {
+      const { granted } = await Location.requestForegroundPermissionsAsync();
+      if (!granted || cancelled) return;
+      sub = await Location.watchPositionAsync(
+        { accuracy: Location.Accuracy.BestForNavigation, distanceInterval: 1, timeInterval: 1000 },
+        (loc) => {
+          const here = { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
+          setMe(here);
+          const { run: r, coins: legCoins, arrowOn: arrow } = latest.current;
+          const hit = legCoins.find((c) => !r.coins.includes(c.id) && distanceM(here, c) <= COIN_RADIUS_M);
+          if (!hit) return;
+          const points = hit.good ? withArrow(POINTS.coin, arrow) : POINTS.wrongWayCoin;
+          latest.current.onRunChange({ ...r, coins: [...r.coins, hit.id], points: r.points + points });
+          if (hit.good) latest.current.playCoin();
+          else latest.current.playWarning();
+          setPopup({ text: hit.good ? `🪙 +${points}` : `⚠️ Wrong way! ${points}`, good: hit.good });
+        },
+      );
+      if (cancelled) sub.remove();
+    })().catch(() => {});
+    return () => {
+      cancelled = true;
+      sub?.remove();
+    };
+  }, []);
+
+  // The compass is only needed while the arrow is on.
+  useEffect(() => {
+    if (!arrowOn) return;
+    let sub: Location.LocationSubscription | undefined;
+    let cancelled = false;
+    Location.watchHeadingAsync((h) => setHeading(h.trueHeading >= 0 ? h.trueHeading : h.magHeading))
+      .then((s) => (cancelled ? s.remove() : (sub = s)))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+      sub?.remove();
+    };
+  }, [arrowOn]);
+
+  useEffect(() => {
+    if (!popup) return;
+    const id = setTimeout(() => setPopup(null), 1800);
+    return () => clearTimeout(id);
+  }, [popup]);
+
+  const toggleArrow = (on: boolean) => {
+    if (!next) return;
+    // Once the arrow has been used on a stretch, that stretch stays at half points.
+    if (on && !run.arrowLegs.includes(next.tag)) onRunChange({ ...run, arrowLegs: [...run.arrowLegs, next.tag] });
+  };
+
+  const mapCaches: MapCache[] = game.checkpoints.flatMap((cp) => {
+    const spot = spots[cp.tag];
+    if (!spot) return [];
+    const status = run.done.includes(cp.tag) ? 'found' : cp.tag === next?.tag ? 'next' : 'later';
+    return [{ ...spot, label: TAG_LABELS[cp.tag], status }];
+  });
 
   const scan = async () => {
     setMessage(null);
@@ -54,7 +147,6 @@ export function Play({
       const settings = await loadSettings();
       if (!settings.skipGps) {
         setMessage('Checking your location…');
-        const spots = await loadSpots();
         const near = await checkNearby(spots[tag]);
         if (!near.ok) {
           return setMessage(`You're about ${Math.round(near.distance)} m from this checkpoint. Move closer and tap again.`);
@@ -75,47 +167,88 @@ export function Play({
   };
 
   return (
-    <Screen>
-      <Title>{game.title}</Title>
-      <Text style={{ color: colors.gold, fontSize: 48, fontWeight: '800', textAlign: 'center' }}>
-        {formatTime(runSeconds(run, now))}
-      </Text>
-      {run.penaltySeconds > 0 && (
-        <Body style={{ textAlign: 'center', color: colors.bad }}>Includes +{run.penaltySeconds}s penalty time</Body>
-      )}
+    <View style={{ flex: 1 }}>
+      <Screen>
+        <Title>{game.title}</Title>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+          <Text style={{ color: colors.gold, fontSize: 40, fontWeight: '800' }}>{formatTime(runSeconds(run, now))}</Text>
+          <Text style={{ color: colors.good, fontSize: 40, fontWeight: '800' }}>{run.points} pts</Text>
+        </View>
+        {run.penaltySeconds > 0 && (
+          <Body style={{ textAlign: 'center', color: colors.bad }}>Includes +{run.penaltySeconds}s penalty time</Body>
+        )}
 
-      <Card>
-        {game.checkpoints.map((cp) => {
-          const done = run.done.includes(cp.tag);
-          return (
-            <Body key={cp.tag} style={{ color: done ? colors.good : colors.text }}>
-              {done ? '✅' : cp.tag === 'boss' ? '👑' : '⭐'} {cp.title}{' '}
-              <Body style={{ color: colors.muted, fontSize: 14 }}>({TAG_LABELS[cp.tag]})</Body>
-            </Body>
-          );
-        })}
-      </Card>
-
-      {run.done.length === 0 && (
         <Card>
-          <Body>{game.intro}</Body>
+          {game.checkpoints.map((cp) => {
+            const done = run.done.includes(cp.tag);
+            return (
+              <Body key={cp.tag} style={{ color: done ? colors.good : colors.text }}>
+                {done ? '✅' : cp.tag === 'boss' ? '👑' : '⭐'} {cp.title}{' '}
+                <Body style={{ color: colors.muted, fontSize: 14 }}>({TAG_LABELS[cp.tag]})</Body>
+              </Body>
+            );
+          })}
         </Card>
-      )}
-      {clue && next && <ClueCard clue={clue} nextTag={next.tag} />}
 
-      {scanning ? (
-        <Card style={{ alignItems: 'center' }}>
-          <ActivityIndicator color={colors.gold} size="large" />
-          <Body>Hold the back of your phone against a tag…</Body>
-          <Button kind="secondary" title="Cancel" onPress={stop} />
+        {run.done.length === 0 && (
+          <Card>
+            <Body>{game.intro}</Body>
+          </Card>
+        )}
+        {clue && <ClueCard clue={clue} />}
+
+        {scanning ? (
+          <Card style={{ alignItems: 'center' }}>
+            <ActivityIndicator color={colors.gold} size="large" />
+            <Body>Hold the back of your phone against a tag…</Body>
+            <Button kind="secondary" title="Cancel" onPress={stop} />
+          </Card>
+        ) : (
+          <Button title="Tap a checkpoint tag" onPress={scan} />
+        )}
+        {message && <Body style={{ color: colors.gold }}>{message}</Body>}
+
+        <Card>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Body style={{ flex: 1 }}>Show the map</Body>
+            <Switch value={showMap} onValueChange={setShowMap} trackColor={{ true: colors.gold }} />
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flex: 1 }}>
+              <Body>Direction arrow</Body>
+              <Body style={{ color: colors.muted, fontSize: 14 }}>
+                Easier, but coins and the next cache are worth half. Once on, it stays on until the next tag.
+              </Body>
+            </View>
+            <Switch value={arrowOn} onValueChange={toggleArrow} disabled={arrowOn} trackColor={{ true: colors.gold }} />
+          </View>
         </Card>
-      ) : (
-        <Button title="Tap a checkpoint tag" onPress={scan} />
-      )}
-      {message && <Body style={{ color: colors.gold }}>{message}</Body>}
 
-      <View style={{ height: 20 }} />
-      <Button kind="secondary" title="Back to menu" onPress={onQuit} />
-    </Screen>
+        {arrowOn && next && (
+          <DirectionArrow me={me} target={spots[next.tag]} heading={heading} label={TAG_LABELS[next.tag]} />
+        )}
+        {showMap && <CacheMap caches={mapCaches} me={me} arrowTo={arrowOn && next ? spots[next.tag] ?? null : null} />}
+
+        <View style={{ height: 20 }} />
+        <Button kind="secondary" title="Back to menu" onPress={onQuit} />
+      </Screen>
+
+      {popup && (
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: 120,
+            alignSelf: 'center',
+            backgroundColor: popup.good ? colors.gold : colors.bad,
+            borderRadius: 20,
+            paddingVertical: 14,
+            paddingHorizontal: 24,
+          }}
+        >
+          <Text style={{ color: colors.bg, fontSize: 28, fontWeight: '900' }}>{popup.text}</Text>
+        </View>
+      )}
+    </View>
   );
 }

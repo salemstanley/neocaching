@@ -32,7 +32,6 @@ export function CheckpointScreen({
   };
 
   const mg = checkpoint.miniGame;
-  const nextTag = game.checkpoints[game.checkpoints.indexOf(checkpoint) + 1]?.tag;
   return (
     <Screen>
       <Title>{checkpoint.title}</Title>
@@ -59,7 +58,7 @@ export function CheckpointScreen({
             </Body>
             <Body>{won ? checkpoint.winText : checkpoint.loseText}</Body>
           </Card>
-          {checkpoint.clue && nextTag && <ClueCard clue={checkpoint.clue} nextTag={nextTag} />}
+          {checkpoint.clue && <ClueCard clue={checkpoint.clue} />}
           <Button title="Continue" onPress={() => onDone(won)} />
         </>
       )}

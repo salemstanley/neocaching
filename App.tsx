@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { colors } from './src/components/ui';
 import { StarAR } from './src/components/StarAR';
 import { findGame } from './src/game/games';
+import { POINTS, timeBonus, withArrow } from './src/game/scoring';
 import { Game, TagCode } from './src/game/types';
 import { Run, addScore, loadRun, loadSettings, runSeconds, saveRun, saveSettings } from './src/lib/storage';
 import { CheckpointScreen } from './src/screens/CheckpointScreen';
@@ -17,7 +18,7 @@ type View =
   | { name: 'home' }
   | { name: 'play' }
   | { name: 'checkpoint'; tag: TagCode }
-  | { name: 'finish'; seconds: number }
+  | { name: 'finish'; seconds: number; points: number; bonus: number }
   | { name: 'leaderboard' }
   | { name: 'setup' }
   | { name: 'demo' };
@@ -40,7 +41,7 @@ export default function App() {
   const game: Game | undefined = run ? findGame(run.gameId) : undefined;
 
   const startGame = (g: Game) => {
-    setRun({ gameId: g.id, startedAt: Date.now(), penaltySeconds: 0, done: [] });
+    setRun({ gameId: g.id, startedAt: Date.now(), penaltySeconds: 0, done: [], points: 0, coins: [], arrowLegs: [] });
     setView({ name: 'play' });
   };
 
@@ -49,19 +50,22 @@ export default function App() {
     const next: Run = {
       ...run,
       done: [...run.done, tag],
+      // Finding the cache scores points whether or not the mini-game is won.
+      points: run.points + withArrow(POINTS.cache, run.arrowLegs.includes(tag)),
       penaltySeconds: run.penaltySeconds + (won ? 0 : game.penaltySeconds),
     };
     if (tag === 'boss') {
       setRun(next);
-      setView({ name: 'finish', seconds: runSeconds(next) });
+      const seconds = runSeconds(next);
+      setView({ name: 'finish', seconds, points: next.points, bonus: timeBonus(seconds) });
     } else {
       setRun(next);
       setView({ name: 'play' });
     }
   };
 
-  const saveScore = async (name: string, seconds: number) => {
-    if (game) await addScore({ name, gameId: game.id, seconds, date: new Date().toISOString() });
+  const saveScore = async (name: string, seconds: number, points: number) => {
+    if (game) await addScore({ name, gameId: game.id, seconds, points, date: new Date().toISOString() });
     const settings = await loadSettings();
     await saveSettings({ ...settings, playerName: name });
     setPlayerName(name);
@@ -73,7 +77,7 @@ export default function App() {
 
   let screen;
   if (view.name === 'play' && run && game) {
-    screen = <Play game={game} run={run} onCheckpoint={(tag) => setView({ name: 'checkpoint', tag })} onQuit={home} />;
+    screen = <Play game={game} run={run} onRunChange={setRun} onCheckpoint={(tag) => setView({ name: 'checkpoint', tag })} onQuit={home} />;
   } else if (view.name === 'checkpoint' && game) {
     const checkpoint = game.checkpoints.find((c) => c.tag === view.tag)!;
     screen = <CheckpointScreen game={game} checkpoint={checkpoint} onDone={(won) => checkpointDone(view.tag, won)} />;
@@ -82,8 +86,10 @@ export default function App() {
       <Finish
         game={game}
         seconds={view.seconds}
+        points={view.points}
+        bonus={view.bonus}
         defaultName={playerName}
-        onSave={(name) => saveScore(name, view.seconds)}
+        onSave={(name) => saveScore(name, view.seconds, view.points + view.bonus)}
       />
     );
   } else if (view.name === 'leaderboard') {

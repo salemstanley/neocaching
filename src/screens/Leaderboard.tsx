@@ -25,7 +25,9 @@ export function Leaderboard({ onBack }: { onBack: () => void }) {
                 <Body>
                   {i + 1}. {s.name}
                 </Body>
-                <Body style={{ color: colors.gold }}>{formatTime(s.seconds)}</Body>
+                <Body style={{ color: colors.gold }}>
+                  {s.points ?? 0} pts · {formatTime(s.seconds)}
+                </Body>
               </View>
             ))}
           </Card>

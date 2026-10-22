@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SpotLocation, TagCode } from '../game/types';
 
-export type Score = { name: string; gameId: string; seconds: number; date: string };
+// points is missing on scores saved before points existed.
+export type Score = { name: string; gameId: string; seconds: number; points?: number; date: string };
 export type Spots = Partial<Record<TagCode, SpotLocation>>;
 export type Settings = { skipGps: boolean; playerName: string };
 
@@ -35,7 +36,7 @@ export const loadScores = () => loadList<Score>(KEYS.scores);
 export async function addScore(score: Score) {
   const scores = await loadScores();
   scores.push(score);
-  scores.sort((a, b) => a.seconds - b.seconds);
+  scores.sort((a, b) => (b.points ?? 0) - (a.points ?? 0) || a.seconds - b.seconds);
   await AsyncStorage.setItem(KEYS.scores, JSON.stringify(scores.slice(0, 50)));
 }
 
@@ -46,12 +47,22 @@ export function formatTime(totalSeconds: number) {
 }
 
 // The game in progress, saved so closing the app doesn't lose it.
-export type Run = { gameId: string; startedAt: number; penaltySeconds: number; done: TagCode[] };
+export type Run = {
+  gameId: string;
+  startedAt: number;
+  penaltySeconds: number;
+  done: TagCode[];
+  points: number;
+  // Ids of coins already picked up.
+  coins: string[];
+  // Next-tag codes for the stretches of trail where the arrow was turned on.
+  arrowLegs: TagCode[];
+};
 
 export async function loadRun(): Promise<Run | null> {
   try {
     const raw = await AsyncStorage.getItem('run');
-    return raw ? JSON.parse(raw) : null;
+    return raw ? { points: 0, coins: [], arrowLegs: [], ...JSON.parse(raw) } : null;
   } catch {
     return null;
   }

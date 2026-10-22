@@ -7,11 +7,15 @@ import { Body, Button, Card, Screen, Title, colors } from '../components/ui';
 export function Finish({
   game,
   seconds,
+  points,
+  bonus,
   defaultName,
   onSave,
 }: {
   game: Game;
   seconds: number;
+  points: number;
+  bonus: number;
   defaultName: string;
   onSave: (name: string) => void;
 }) {
@@ -22,10 +26,16 @@ export function Finish({
       <Card>
         <Body>{game.ending}</Body>
       </Card>
-      <Body style={{ fontSize: 22, textAlign: 'center' }}>Your time</Body>
+      <Body style={{ fontSize: 22, textAlign: 'center' }}>Your score</Body>
       <Body style={{ fontSize: 52, fontWeight: '800', textAlign: 'center', color: colors.gold }}>
-        {formatTime(seconds)}
+        {points + bonus} pts
       </Body>
+      <Card>
+        <Body>Coins and caches: {points} pts</Body>
+        <Body>
+          Time bonus: {bonus} pts (finished in {formatTime(seconds)})
+        </Body>
+      </Card>
       <TextInput
         value={name}
         onChangeText={setName}
