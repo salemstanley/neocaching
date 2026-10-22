@@ -10,19 +10,33 @@ Turn a park into a game board. Tap your phone on hidden NFC tags, catch the star
 4. Tap **Update** (or **Install** the first time). Your saved tag spots and scores are kept.
 5. A new version is built every time the code changes. Repeat these steps to update.
 
-## Set up a loop
+## Write your tags (once)
 
-You need 6 NTAG215 tags: 5 checkpoints and 1 final boss.
+You need 6 NTAG215 tags: Start, 1, 2, 3, 4 and 5 (the final boss).
 
-1. Open the app and tap **Set up tags and spots**.
-2. For each checkpoint, tap **Write tag** and hold a blank tag to the back of your phone, near the camera.
-3. Stick the tag in its spot. Stand right next to it and tap **Save spot**.
-4. Testing at home? Turn on **Skip the GPS check** so tags work anywhere.
+1. Tap **Write tags and settings**.
+2. Tap each button and hold the matching blank tag to the back of your phone, near the camera.
+3. The same 6 tags work with every course, so you can move them anywhere.
+
+## Make a course
+
+1. Tap **Make a new course**. It starts with sample stops you can change.
+2. Fill in the story, then tap each tag to open it. Pick a challenge: trivia, speed tap, memory match, or a **real-world activity** like "eat dinner here".
+3. Write the clue that leads to the next tag.
+4. Set where each tag is hidden: **Use where I'm standing**, or **Pick on map** to plan from home.
+5. Turn off **Timed** for relaxed adventures like a date night.
+6. Changes save automatically.
+
+To play a built-in course in a new place, tap **Set up** on it and set new spots.
+
+## Share a course
+
+Open a course and tap **Share this course** to send it by text or email. On the other phone, tap **Import a course** and paste the whole message. The tag spots come along too.
 
 ## How a game works
 
 - Tap **Start game**. The clock starts.
-- Find the tags in order: Start, then 1 to 4. After each challenge you get a clue to the next tag. If you're stuck, **Use the compass** shows how far away it is and which way to go.
+- Find the tags in order: Start, then 1 to 5. After each challenge you get a clue to the next tag.
 - Tap **Tap a checkpoint tag** and hold your phone to the tag.
 - If you're close enough (about 30 meters), a star appears through your camera. Tap it to catch it.
 - Read the next part of the story and beat the mini-game. Losing adds 30 seconds to your time.
@@ -34,16 +48,16 @@ You need 6 NTAG215 tags: 5 checkpoints and 1 final boss.
 - **Wrong-way coins** sit behind the tag you just left, pointing away from the next one: -10 each, with a warning buzz.
 - **Each cache (tag) found:** +100.
 - **Direction arrow:** points to the next cache. Turning it on halves the coins and cache points for that stretch. Mini-games are not affected.
-- **Time bonus:** 1 point for every second you finish under 15 minutes.
+- **Time bonus:** 1 point for every second you finish under the course's time limit (15 minutes for Red Rock Pioneers). Untimed courses have no bonus.
 - **Map:** shows every cache and your blue dot, but never the coins.
 
-Coins and the arrow need each tag's spot saved in Set up.
+Coins, the map and the arrow need each tag's spot set in the course.
 
 ## Games
 
 - **Red Rock Pioneers**: survive your first year in 1860s St. George.
 
-More themes reuse the same 6 tags. Each one is a single file in `src/game/`.
+Courses made in the app live on the phone. Built-in courses are files in `src/game/`.
 
 ## Not built yet
 

@@ -32,9 +32,11 @@ export function Finish({
       </Body>
       <Card>
         <Body>Coins and caches: {points} pts</Body>
-        <Body>
-          Time bonus: {bonus} pts (finished in {formatTime(seconds)})
-        </Body>
+        {game.timed !== false && (
+          <Body>
+            Time bonus: {bonus} pts (finished in {formatTime(seconds)})
+          </Body>
+        )}
       </Card>
       <TextInput
         value={name}

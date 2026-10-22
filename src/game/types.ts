@@ -16,7 +16,11 @@ export type TriviaQuestion = {
 export type MiniGame =
   | { kind: 'trivia'; questions: TriviaQuestion[] }
   | { kind: 'speedTap'; taps: number; seconds: number; label: string }
-  | { kind: 'memory'; symbols: string[]; seconds: number };
+  | { kind: 'memory'; symbols: string[]; seconds: number }
+  // A real-world task (eat dinner, take a selfie, dance). Always counts as a win.
+  | { kind: 'activity'; task: string };
+
+export type MiniGameKind = MiniGame['kind'];
 
 export type Checkpoint = {
   tag: TagCode;
@@ -42,11 +46,17 @@ export type Game = {
   ending: string;
   // Seconds added to the clock when a mini-game is lost.
   penaltySeconds: number;
+  // Untimed courses (like a date night) show no clock and give no time bonus.
+  timed?: boolean;
+  // Finishing under this earns a time bonus. Defaults to 15.
+  parMinutes?: number;
+  // Made in the app's course maker rather than built in.
+  custom?: boolean;
   checkpoints: Checkpoint[]; // cp1..cp5 then boss, in the order players must find them
   starColor: string;
 };
 
-// Where each tag is stuck in the real world. One set per location (loop).
+// Where each tag is stuck in the real world. Each course has its own set.
 export type SpotLocation = { latitude: number; longitude: number };
 
 // The name written on each physical tag sticker, shown in the app so players

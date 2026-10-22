@@ -30,6 +30,7 @@ Run lint and typecheck before declaring any task done.
 ## Project layout
 
 - `src/game/` holds game content. Each theme is one file (e.g. `pioneer.ts`) listed in `games.ts`. All games share the same 6 tag codes (`cp1`-`cp5`, `boss`).
+- Players also make courses in the app (`src/screens/CourseEditor.tsx`). Custom courses and each course's tag spots live in AsyncStorage (`courses`, `spots:<courseId>`); `src/game/template.ts` has the starter course.
 - `src/lib/` holds NFC, GPS and storage helpers. `src/components/` holds the star camera view and mini-games.
 - `npx expo install` can't reach Expo's servers from some sandboxes; if so, pin versions from `node_modules/expo/bundledNativeModules.json` with `npm install`.
 - Android builds run in GitHub Actions (`.github/workflows/android.yml`) and publish an APK to the `latest` release.

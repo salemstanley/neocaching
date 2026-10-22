@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { GAMES } from '../game/games';
+import { Game } from '../game/types';
 import { Score, formatTime, loadScores } from '../lib/storage';
 import { Body, Button, Card, Screen, Title, colors } from '../components/ui';
 
-export function Leaderboard({ onBack }: { onBack: () => void }) {
+export function Leaderboard({ courses, onBack }: { courses: Game[]; onBack: () => void }) {
   const [scores, setScores] = useState<Score[] | null>(null);
 
   useEffect(() => {
@@ -14,7 +14,7 @@ export function Leaderboard({ onBack }: { onBack: () => void }) {
   return (
     <Screen>
       <Title>High scores</Title>
-      {GAMES.map((game) => {
+      {courses.map((game) => {
         const list = (scores ?? []).filter((s) => s.gameId === game.id).slice(0, 10);
         return (
           <Card key={game.id}>

@@ -3,11 +3,23 @@ import { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { colors } from './src/components/ui';
 import { StarAR } from './src/components/StarAR';
-import { findGame } from './src/game/games';
+import { BUILT_IN_GAMES, findGame } from './src/game/games';
 import { POINTS, timeBonus, withArrow } from './src/game/scoring';
+import { copyCourse, newCourse } from './src/game/template';
 import { Game, TagCode } from './src/game/types';
-import { Run, addScore, loadRun, loadSettings, runSeconds, saveRun, saveSettings } from './src/lib/storage';
+import {
+  Run,
+  addScore,
+  loadCustomCourses,
+  loadRun,
+  loadSettings,
+  runSeconds,
+  saveCustomCourse,
+  saveRun,
+  saveSettings,
+} from './src/lib/storage';
 import { CheckpointScreen } from './src/screens/CheckpointScreen';
+import { CourseEditor } from './src/screens/CourseEditor';
 import { Finish } from './src/screens/Finish';
 import { Home } from './src/screens/Home';
 import { Leaderboard } from './src/screens/Leaderboard';
@@ -21,14 +33,19 @@ type View =
   | { name: 'finish'; seconds: number; points: number; bonus: number }
   | { name: 'leaderboard' }
   | { name: 'setup' }
-  | { name: 'demo' };
+  | { name: 'demo' }
+  | { name: 'edit'; course: Game };
 
 export default function App() {
   const [view, setView] = useState<View>({ name: 'home' });
   const [run, setRunState] = useState<Run | null>(null);
   const [playerName, setPlayerName] = useState('');
+  const [courses, setCourses] = useState<Game[]>(BUILT_IN_GAMES);
+
+  const refreshCourses = () => loadCustomCourses().then((custom) => setCourses([...BUILT_IN_GAMES, ...custom]));
 
   useEffect(() => {
+    refreshCourses();
     loadRun().then(setRunState);
     loadSettings().then((s) => setPlayerName(s.playerName));
   }, []);
@@ -38,7 +55,7 @@ export default function App() {
     saveRun(next);
   };
 
-  const game: Game | undefined = run ? findGame(run.gameId) : undefined;
+  const game: Game | undefined = run ? findGame(courses, run.gameId) : undefined;
 
   const startGame = (g: Game) => {
     setRun({ gameId: g.id, startedAt: Date.now(), penaltySeconds: 0, done: [], points: 0, coins: [], arrowLegs: [] });
@@ -57,7 +74,7 @@ export default function App() {
     if (tag === 'boss') {
       setRun(next);
       const seconds = runSeconds(next);
-      setView({ name: 'finish', seconds, points: next.points, bonus: timeBonus(seconds) });
+      setView({ name: 'finish', seconds, points: next.points, bonus: timeBonus(game, seconds) });
     } else {
       setRun(next);
       setView({ name: 'play' });
@@ -93,15 +110,42 @@ export default function App() {
       />
     );
   } else if (view.name === 'leaderboard') {
-    screen = <Leaderboard onBack={home} />;
+    screen = <Leaderboard courses={courses} onBack={home} />;
   } else if (view.name === 'setup') {
     screen = <Setup onBack={home} />;
   } else if (view.name === 'demo') {
     screen = <StarAR color={colors.gold} onCaught={home} />;
+  } else if (view.name === 'edit') {
+    screen = (
+      <CourseEditor
+        key={view.course.id}
+        initial={view.course}
+        onChanged={refreshCourses}
+        onCopy={async (c) => {
+          const copy = copyCourse(c);
+          await saveCustomCourse(copy);
+          await refreshCourses();
+          setView({ name: 'edit', course: copy });
+        }}
+        onBack={home}
+      />
+    );
   } else {
     screen = (
       <Home
+        courses={courses}
         run={run}
+        onEdit={(course) => setView({ name: 'edit', course })}
+        onNewCourse={async () => {
+          const course = newCourse();
+          await saveCustomCourse(course);
+          await refreshCourses();
+          setView({ name: 'edit', course });
+        }}
+        onImported={async (course) => {
+          await refreshCourses();
+          setView({ name: 'edit', course });
+        }}
         onStart={startGame}
         onResume={() => setView({ name: 'play' })}
         onLeaderboard={() => setView({ name: 'leaderboard' })}

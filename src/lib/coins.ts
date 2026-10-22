@@ -3,8 +3,9 @@ import { bearingDeg, distanceM, offsetBy } from './location';
 
 // 25 feet between coins.
 export const COIN_SPACING_M = 7.62;
-// How close you need to walk to a coin to grab it.
-export const COIN_RADIUS_M = 5;
+// How close you need to walk to a coin to grab it. Phone GPS often wanders
+// 3-5 m, so this is a little generous.
+export const COIN_RADIUS_M = 7;
 
 export type Coin = SpotLocation & { id: string; good: boolean };
 
@@ -16,8 +17,11 @@ export function coinsForLeg(nextTag: TagCode, from: SpotLocation, to: SpotLocati
   const bearing = bearingDeg(from, to);
   const coins: Coin[] = [];
 
-  for (let d = COIN_SPACING_M, i = 0; d < total - COIN_SPACING_M; d += COIN_SPACING_M, i++) {
-    coins.push({ id: `${nextTag}-good-${i}`, good: true, ...offsetBy(from, d, bearing) });
+  // Spread coins evenly, about 25 feet apart, never closer than that to either
+  // tag. Short stretches still get one coin halfway.
+  const count = Math.max(1, Math.round(total / COIN_SPACING_M) - 1);
+  for (let i = 0; i < count; i++) {
+    coins.push({ id: `${nextTag}-good-${i}`, good: true, ...offsetBy(from, (total * (i + 1)) / (count + 1), bearing) });
   }
   // Start 2 coins out so standing at the tag doesn't trigger them.
   for (let k = 2; k <= 5; k++) {

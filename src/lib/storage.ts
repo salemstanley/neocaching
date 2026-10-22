@@ -1,12 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SpotLocation, TagCode } from '../game/types';
+import { Game, SpotLocation, TagCode } from '../game/types';
 
 // points is missing on scores saved before points existed.
 export type Score = { name: string; gameId: string; seconds: number; points?: number; date: string };
 export type Spots = Partial<Record<TagCode, SpotLocation>>;
 export type Settings = { skipGps: boolean; playerName: string };
 
-const KEYS = { scores: 'scores', spots: 'spots', settings: 'settings' };
+const KEYS = { scores: 'scores', settings: 'settings', courses: 'courses' };
 
 async function load<T>(key: string, fallback: T): Promise<T> {
   try {
@@ -26,8 +26,32 @@ async function loadList<T>(key: string): Promise<T[]> {
   }
 }
 
-export const loadSpots = () => load<Spots>(KEYS.spots, {});
-export const saveSpots = (s: Spots) => AsyncStorage.setItem(KEYS.spots, JSON.stringify(s));
+// Each course remembers where its tags are hidden.
+export async function loadSpots(courseId: string): Promise<Spots> {
+  const spots = await load<Spots>(`spots:${courseId}`, {});
+  // Spots saved before courses existed belong to the pioneer course.
+  if (courseId === 'pioneer' && Object.keys(spots).length === 0) return load<Spots>('spots', {});
+  return spots;
+}
+export const saveSpots = (courseId: string, s: Spots) =>
+  AsyncStorage.setItem(`spots:${courseId}`, JSON.stringify(s));
+
+// Courses made in the app's course maker.
+export const loadCustomCourses = () => loadList<Game>(KEYS.courses);
+
+export async function saveCustomCourse(course: Game) {
+  const courses = await loadCustomCourses();
+  const i = courses.findIndex((c) => c.id === course.id);
+  if (i >= 0) courses[i] = course;
+  else courses.push(course);
+  await AsyncStorage.setItem(KEYS.courses, JSON.stringify(courses));
+}
+
+export async function deleteCustomCourse(id: string) {
+  const courses = (await loadCustomCourses()).filter((c) => c.id !== id);
+  await AsyncStorage.setItem(KEYS.courses, JSON.stringify(courses));
+  await AsyncStorage.removeItem(`spots:${id}`);
+}
 
 export const loadSettings = () => load<Settings>(KEYS.settings, { skipGps: false, playerName: '' });
 export const saveSettings = (s: Settings) => AsyncStorage.setItem(KEYS.settings, JSON.stringify(s));

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Checkpoint, Game } from '../game/types';
+import { Activity } from '../components/minigames/Activity';
 import { MemoryMatch } from '../components/minigames/MemoryMatch';
 import { SpeedTap } from '../components/minigames/SpeedTap';
 import { Trivia } from '../components/minigames/Trivia';
@@ -40,7 +41,7 @@ export function CheckpointScreen({
           <Card>
             <Body>{checkpoint.story}</Body>
           </Card>
-          <Button title="Start the challenge" onPress={() => setPhase('game')} />
+          <Button title={mg.kind === 'activity' ? 'See your mission' : 'Start the challenge'} onPress={() => setPhase('game')} />
         </>
       )}
       {phase === 'game' && mg.kind === 'trivia' && <Trivia questions={mg.questions} onDone={finishGame} />}
@@ -50,11 +51,12 @@ export function CheckpointScreen({
       {phase === 'game' && mg.kind === 'memory' && (
         <MemoryMatch symbols={mg.symbols} seconds={mg.seconds} onDone={finishGame} />
       )}
+      {phase === 'game' && mg.kind === 'activity' && <Activity task={mg.task} onDone={finishGame} />}
       {phase === 'result' && (
         <>
           <Card>
             <Body style={{ fontSize: 22, fontWeight: '800', color: won ? colors.good : colors.bad }}>
-              {won ? 'Challenge complete!' : `Not quite. +${game.penaltySeconds}s penalty`}
+              {won ? 'Challenge complete!' : game.timed === false ? 'Not quite!' : `Not quite. +${game.penaltySeconds}s penalty`}
             </Body>
             <Body>{won ? checkpoint.winText : checkpoint.loseText}</Body>
           </Card>

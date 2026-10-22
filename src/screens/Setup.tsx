@@ -1,22 +1,19 @@
 import { useEffect, useState } from 'react';
 import { Switch, TextInput, View } from 'react-native';
 import { TAG_CODES, TAG_LABELS as LABELS, TagCode } from '../game/types';
-import { getHere } from '../lib/location';
 import { cancelScan, nfcStatus, writeTagCode } from '../lib/nfc';
-import { Settings, Spots, loadSettings, loadSpots, saveSettings, saveSpots } from '../lib/storage';
+import { Settings, loadSettings, saveSettings } from '../lib/storage';
 import { Body, Button, Card, Screen, Title, colors } from '../components/ui';
 
-
-// Walk your loop with the tags: write each tag, stick it up, then save the spot.
+// Write the 6 physical tags (they work with every course) and change settings.
+// Where each tag is hidden is set per course, in the course editor.
 export function Setup({ onBack }: { onBack: () => void }) {
   const [settings, setSettings] = useState<Settings>({ skipGps: false, playerName: '' });
-  const [spots, setSpots] = useState<Spots>({});
-  const [busy, setBusy] = useState<string | null>(null);
+  const [busy, setBusy] = useState<TagCode | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     loadSettings().then(setSettings);
-    loadSpots().then(setSpots);
     return () => cancelScan();
   }, []);
 
@@ -29,7 +26,7 @@ export function Setup({ onBack }: { onBack: () => void }) {
     setMessage(null);
     const status = await nfcStatus();
     if (status !== 'ok') return setMessage(status === 'off' ? 'Turn on NFC in your phone settings first.' : 'This phone cannot use NFC.');
-    setBusy(`write-${tag}`);
+    setBusy(tag);
     try {
       await writeTagCode(tag);
       setMessage(`✅ Tag is now ${LABELS[tag]}.`);
@@ -40,59 +37,25 @@ export function Setup({ onBack }: { onBack: () => void }) {
     }
   };
 
-  const saveSpot = async (tag: TagCode) => {
-    setMessage(null);
-    setBusy(`spot-${tag}`);
-    try {
-      const here = await getHere();
-      const next = { ...spots, [tag]: { latitude: here.coords.latitude, longitude: here.coords.longitude } };
-      setSpots(next);
-      await saveSpots(next);
-      setMessage(`📍 Saved this spot for ${LABELS[tag]} (accurate to about ${Math.round(here.coords.accuracy ?? 0)} m).`);
-    } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Could not get your location.');
-    } finally {
-      setBusy(null);
-    }
-  };
-
   return (
     <Screen>
-      <Title>Set up</Title>
+      <Title>Tags and settings</Title>
       <Body style={{ color: colors.muted }}>
-        For each tag: tap Write tag and hold a blank tag to the back of your phone. Stick the tag in its spot, stand next to it, and tap Save spot.
+        You only need to write each tag once. The same 6 tags work with every course. Tap a button and hold a blank tag to the back of your phone.
       </Body>
 
       {message && <Body style={{ color: colors.gold }}>{message}</Body>}
 
-      {TAG_CODES.map((tag) => {
-        const spot = spots[tag];
-        return (
-          <Card key={tag}>
-            <Body style={{ fontWeight: '800' }}>{LABELS[tag]}</Body>
-            <Body style={{ color: colors.muted, fontSize: 14 }}>
-              {spot ? `📍 ${spot.latitude.toFixed(5)}, ${spot.longitude.toFixed(5)}` : 'Spot not saved yet (GPS check is skipped)'}
-            </Body>
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              <View style={{ flex: 1 }}>
-                <Button
-                  title={busy === `write-${tag}` ? 'Hold to tag…' : 'Write tag'}
-                  onPress={() => (busy === `write-${tag}` ? cancelScan() : write(tag))}
-                  disabled={!!busy && busy !== `write-${tag}`}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Button
-                  kind="secondary"
-                  title={busy === `spot-${tag}` ? 'Locating…' : 'Save spot'}
-                  onPress={() => saveSpot(tag)}
-                  disabled={!!busy}
-                />
-              </View>
-            </View>
-          </Card>
-        );
-      })}
+      <Card>
+        {TAG_CODES.map((tag) => (
+          <Button
+            key={tag}
+            title={busy === tag ? 'Hold the tag to your phone…' : `Write ${LABELS[tag]}`}
+            onPress={() => (busy === tag ? cancelScan() : write(tag))}
+            disabled={!!busy && busy !== tag}
+          />
+        ))}
+      </Card>
 
       <Card>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>

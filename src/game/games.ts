@@ -1,9 +1,9 @@
 import { pioneerGame } from './pioneer';
 import { Game } from './types';
 
-// Every game uses the same 6 tags. Add new themes here.
-export const GAMES: Game[] = [pioneerGame];
+// Courses that come with the app. Players make more in the course maker.
+export const BUILT_IN_GAMES: Game[] = [pioneerGame];
 
-export function findGame(id: string): Game | undefined {
-  return GAMES.find((g) => g.id === id);
+export function findGame(courses: Game[], id: string): Game | undefined {
+  return courses.find((g) => g.id === id);
 }

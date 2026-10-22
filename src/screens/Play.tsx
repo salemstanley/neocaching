@@ -58,7 +58,7 @@ export function Play({
   latest.current = { run, coins, arrowOn, onRunChange, playCoin, playWarning };
 
   useEffect(() => {
-    loadSpots().then(setSpots);
+    loadSpots(game.id).then(setSpots);
     const id = setInterval(() => setNow(Date.now()), 500);
     return () => {
       clearInterval(id);
@@ -138,7 +138,7 @@ export function Play({
     setScanning(true);
     try {
       const tag = await readTagCode();
-      if (!tag) return setMessage("That tag isn't a Neocaching checkpoint. Use Set up tags to write it first.");
+      if (!tag) return setMessage("That tag isn't a Neocaching checkpoint. Write it first under Write tags and settings.");
       if (run.done.includes(tag)) return setMessage('You already captured that tag. Follow your clue to the next one!');
       if (tag !== next.tag) {
         return setMessage(`That's ${TAG_LABELS[tag]}, but you need ${TAG_LABELS[next.tag]} next. Follow your clue!`);
@@ -171,10 +171,12 @@ export function Play({
       <Screen>
         <Title>{game.title}</Title>
         <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
-          <Text style={{ color: colors.gold, fontSize: 40, fontWeight: '800' }}>{formatTime(runSeconds(run, now))}</Text>
+          {game.timed !== false && (
+            <Text style={{ color: colors.gold, fontSize: 40, fontWeight: '800' }}>{formatTime(runSeconds(run, now))}</Text>
+          )}
           <Text style={{ color: colors.good, fontSize: 40, fontWeight: '800' }}>{run.points} pts</Text>
         </View>
-        {run.penaltySeconds > 0 && (
+        {game.timed !== false && run.penaltySeconds > 0 && (
           <Body style={{ textAlign: 'center', color: colors.bad }}>Includes +{run.penaltySeconds}s penalty time</Body>
         )}
 
