@@ -89,7 +89,7 @@ export function Choice({
       <View style={{ gap: 12 }}>
         <Body style={{ fontSize: 20, fontWeight: '700' }}>{question}</Body>
         <Body style={{ color: colors.muted, fontSize: 14 }}>
-          It's up to you, and either way is the right call. If you stop, the clock pauses while you're here, and staying {stayMinutes} minutes earns {bonus} bonus points. Just don't say yes and then run off: that loses ALL your points.
+          Your call! Stay {stayMinutes} minutes for +{bonus} (the clock stops). No fibbing!
         </Body>
         <Button title={yesLabel} onPress={() => setPhase('staying')} />
         <Button kind="secondary" title={noLabel} onPress={() => setPhase('no')} />

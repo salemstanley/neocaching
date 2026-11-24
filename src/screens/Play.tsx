@@ -253,7 +253,7 @@ export function Play({
             ) : (
               <>
                 <Button kind="secondary" title="🔍 Show me the hiding spot" onPress={showHint} />
-                <Body style={{ color: colors.muted, fontSize: 14 }}>Shows a photo of where the tag is hidden. Costs {-POINTS.hint} points.</Body>
+                <Body style={{ color: colors.muted, fontSize: 14 }}>Stuck? Peek at a photo. Costs {-POINTS.hint} points.</Body>
               </>
             )}
           </Card>
@@ -272,7 +272,7 @@ export function Play({
             <View style={{ flex: 1 }}>
               <Body>Direction arrow</Body>
               <Body style={{ color: colors.muted, fontSize: 14 }}>
-                Easier, but coins and the next cache are worth half. Once on, it stays on until the next tag.
+                Easier, but half points until the next tag.
               </Body>
             </View>
             <Switch value={arrowOn} onValueChange={toggleArrow} disabled={arrowOn} trackColor={{ true: colors.gold }} />
