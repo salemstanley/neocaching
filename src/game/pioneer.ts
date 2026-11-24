@@ -1,3 +1,4 @@
+import { quickTurkeyTrot } from './turkeyTrot';
 import { Game } from './types';
 
 // A story inspired by the Cotton Mission settlers who founded St. George in
@@ -127,3 +128,19 @@ export const pioneerGame: Game = {
     },
   ],
 };
+
+// A simple holiday version of the apartment loop. It uses the same tags and
+// saved spots as Red Rock Pioneers (spotsId 'pioneer').
+export const apartmentTurkeyTrot: Game = quickTurkeyTrot({
+  id: 'apartment-turkey-trot',
+  location: 'Salem - Test course',
+  spotsId: 'pioneer',
+  startClue: 'Find the tag marked Start and tap it to grab your plate!',
+  clues: [
+    'The green beans rolled off to the rocks in front of your parking spot. Tag 1 is hiding among them.',
+    'The mashed potatoes ran for the shade. Look behind the smallest palm by the building for Tag 2.',
+    'The cranberries stopped at the red sign that tells cars to stop. Tag 3 is on the stop sign.',
+    'The turkey is hiding on the Rain Bird box near the basketball hoop. That is Tag 4.',
+    'The Piecaken is waiting outside the nearest dumpster enclosure. The Finish tag (the sticker marked 5) is there.',
+  ],
+});
