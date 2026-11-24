@@ -13,31 +13,26 @@ function Row({ label, points }: { label: string; points: string }) {
   );
 }
 
-// A quick, fun "here's the idea" before the clock starts. The points table
-// is tucked away for anyone who wants it.
+// A short backstory to set up the game. The surprises along the way (trail
+// items, the wrong-way warning) are left for players to discover.
 export function Rules({ game, onStart, onBack }: { game: Game; onStart: () => void; onBack: () => void }) {
   const [showPoints, setShowPoints] = useState(false);
   const timed = game.timed !== false;
-  const trail = game.trailName ?? 'coins';
-  const goodies = game.trailItems?.slice(0, 3).join('') ?? '🪙';
+  const course = /5k/i.test(game.location ?? '') ? 'the 5k course' : 'the course';
 
   return (
     <Screen>
       <Title>{game.title}</Title>
-      <Body style={{ fontSize: 19 }}>{game.tagline}</Body>
 
-      <Card style={{ gap: 12 }}>
-        <Body style={{ fontSize: 19 }}>🔍 Follow the clues to {game.checkpoints.length} hidden tags.</Body>
-        <Body style={{ fontSize: 19 }}>📱 Tap your phone on each one.</Body>
-        <Body style={{ fontSize: 19 }}>🎮 Win the mini-game.</Body>
+      <Card style={{ gap: 14 }}>
+        <Body style={{ fontSize: 20 }}>{game.intro || game.tagline}</Body>
+        <Body style={{ fontSize: 19 }}>🏃 Follow {course}.</Body>
         <Body style={{ fontSize: 19 }}>
-          {goodies} Grab the {trail} along the way.
+          🔍 {timed ? 'Find the tags along the way to earn bonus points, or go for time!' : 'Find the tags along the way to earn bonus points.'}
         </Body>
-        {game.wrongWay && <Body style={{ fontSize: 19 }}>{game.wrongWay.emoji} Wrong way? Watch out!</Body>}
-        <Body style={{ fontSize: 19 }}>🏆 {timed ? 'Be quick. Score big.' : 'Take your time and have fun.'}</Body>
       </Card>
 
-      <Button title={timed ? "Ready, set, go!" : "Let's go!"} onPress={onStart} />
+      <Button title={timed ? 'Ready, set, go!' : "Let's go!"} onPress={onStart} />
 
       <Pressable onPress={() => setShowPoints(!showPoints)}>
         <Body style={{ color: colors.muted, textAlign: 'center' }}>{showPoints ? 'Hide the points ▴' : 'How do points work? ▾'}</Body>
@@ -45,8 +40,6 @@ export function Rules({ game, onStart, onBack }: { game: Game; onStart: () => vo
       {showPoints && (
         <Card>
           <Row label="Find a tag" points={`+${POINTS.cache}`} />
-          <Row label={`Each of the ${trail}`} points={`+${POINTS.coin}`} />
-          <Row label={game.wrongWay ? game.wrongWay.name : 'Wrong way'} points={`${game.wrongWay?.points ?? POINTS.wrongWayCoin}`} />
           <Row label="Peek at the hiding spot" points={`${POINTS.hint}`} />
           <Row label="Use the arrow" points="Half" />
           {timed && <Row label={`Each second under ${game.parMinutes ?? 15} min`} points="+1" />}

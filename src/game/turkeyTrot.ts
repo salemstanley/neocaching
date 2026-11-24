@@ -268,7 +268,7 @@ const AGES: Record<Age, { suffix: string; title: string; theme: string; badge: s
     badge: 'Ages 10 and under',
     par: 150,
     penalty: 0,
-    rules: ['Stay with a grown-up the whole time.', "Losing a challenge doesn't add any time.", 'Go the wrong way and a turkey attacks!'],
+    rules: ['Stay with a grown-up the whole time.', "Losing a challenge doesn't add any time."],
   },
   teens: {
     suffix: 'teens',
@@ -277,7 +277,7 @@ const AGES: Record<Age, { suffix: string; title: string; theme: string; badge: s
     badge: 'Ages 11 to 18',
     par: 100,
     penalty: 30,
-    rules: ['Look both ways at every street crossing.', 'Go the wrong way and a turkey attacks!'],
+    rules: ['Look both ways at every street crossing.'],
   },
   adults: {
     suffix: 'adults',
@@ -286,7 +286,7 @@ const AGES: Record<Age, { suffix: string; title: string; theme: string; badge: s
     badge: 'Adults',
     par: 80,
     penalty: 60,
-    rules: ['Harder challenges and a tighter clock. Losing a challenge adds a full minute.', 'Go the wrong way and a turkey attacks!'],
+    rules: ['Harder challenges and a tighter clock. Losing a challenge adds a full minute.'],
   },
 };
 
@@ -315,7 +315,7 @@ function makeGame(site: Site, age: Age): Game {
     location: site.location,
     theme: a.theme,
     tagline: 'The Thanksgiving feast ran away! Chase it down before dinner gets cold. 🦃',
-    intro: `Every dish on ${site.family} table just ran out the door! Grab a plate and go get them.`,
+    intro: `Every dish on ${site.family} table just ran out the door! The turkey, the rolls, even the Piecaken are loose on the course. Grab a plate and bring dinner home.`,
     startClue: site.startClue,
     ending: 'Your plate is full and the Piecaken has been captured. Happy Thanksgiving! Time to eat!',
     penaltySeconds: a.penalty,
@@ -382,7 +382,7 @@ export function quickTurkeyTrot(opts: { id: string; location: string; spotsId: s
     badge: 'All ages',
     location: opts.location,
     tagline: 'A quick Thanksgiving dash. Fill your plate and beat the Piecaken! 🦃',
-    intro: 'Every dish on the table just ran out the door! Grab a plate and go get them.',
+    intro: 'Every dish on the table just ran out the door! The turkey, the rolls, even the Piecaken are loose on the course. Grab a plate and bring dinner home.',
     startClue: opts.startClue,
     ending: 'Your plate is full and the Piecaken has been captured. Happy Thanksgiving!',
     penaltySeconds: 0,
@@ -393,7 +393,6 @@ export function quickTurkeyTrot(opts: { id: string; location: string; spotsId: s
     trailName: 'table settings',
     wrongWay: { emoji: '🦃', name: 'Turkey attack', points: -15, sound: 'turkey' },
     spotsId: opts.spotsId,
-    rules: ['Go the wrong way and a turkey attacks!'],
     checkpoints,
   };
 }
