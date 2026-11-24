@@ -4,9 +4,12 @@ import { DeviceMotion } from 'expo-sensors';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, Polygon, RadialGradient, Stop } from 'react-native-svg';
+import { Prize } from '../game/types';
 import { colors } from './ui';
 
 const SIZE = 220;
+
+// Prize names read like "a bowl of green bean casserole".
 
 function starPoints(size: number) {
   const c = size / 2;
@@ -23,8 +26,9 @@ function starPoints(size: number) {
 
 // Pokemon Go style: the camera shows the real world, and a spinning star floats
 // in front of you. Tilting the phone shifts the star a little so it feels like
-// it's hanging in the air. Tap the star to catch it.
-export function StarAR({ color, onCaught }: { color: string; onCaught: () => void }) {
+// it's hanging in the air. Tap the star to catch it. Courses can float a
+// prize (like a Thanksgiving dish) instead of the star.
+export function StarAR({ color, prize, onCaught }: { color: string; prize?: Prize; onCaught: () => void }) {
   const [permission, requestPermission] = useCameraPermissions();
   const spin = useRef(new Animated.Value(0)).current;
   const bob = useRef(new Animated.Value(0)).current;
@@ -97,6 +101,11 @@ export function StarAR({ color, onCaught }: { color: string; onCaught: () => voi
           <View style={[styles.shadow, { shadowColor: color }]} />
           <Pressable onPress={handleCatch} hitSlop={30}>
             <Animated.View style={{ transform: [{ perspective: 800 }, { rotateY }] }}>
+              {prize ? (
+                <View style={{ width: SIZE, height: SIZE, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontSize: SIZE * 0.68 }}>{prize.emoji}</Text>
+                </View>
+              ) : (
               <Svg width={SIZE} height={SIZE}>
                 <Defs>
                   <RadialGradient id="g" cx="50%" cy="40%" r="60%">
@@ -107,13 +116,20 @@ export function StarAR({ color, onCaught }: { color: string; onCaught: () => voi
                 </Defs>
                 <Polygon points={starPoints(SIZE)} fill="url(#g)" stroke="#FFF6D5" strokeWidth={3} />
               </Svg>
+              )}
             </Animated.View>
           </Pressable>
         </Animated.View>
       </Animated.View>
 
       <View style={styles.banner} pointerEvents="none">
-        <Text style={styles.bannerText}>{caught ? 'Got it!' : 'A star appeared! Tap it to catch it.'}</Text>
+        <Text style={styles.bannerText}>{caught
+            ? prize
+              ? `You collected ${prize.name}!`
+              : 'Got it!'
+            : prize
+              ? `${prize.name[0].toUpperCase()}${prize.name.slice(1)} appeared! Tap it to collect it.`
+              : 'A star appeared! Tap it to catch it.'}</Text>
       </View>
     </View>
   );

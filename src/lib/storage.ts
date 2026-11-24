@@ -27,6 +27,15 @@ async function loadList<T>(key: string): Promise<T[]> {
   }
 }
 
+// Courses that share hidden tags (like the age versions of one course) share spots.
+export const spotsKey = (course: Game) => course.spotsId ?? course.id;
+
+// Where a course's tags are: spots built into the course, replaced by any
+// saved on this phone.
+export async function loadCourseSpots(course: Game): Promise<Spots> {
+  return { ...course.presetSpots, ...(await loadSpots(spotsKey(course))) };
+}
+
 // Each course remembers where its tags are hidden.
 export async function loadSpots(courseId: string): Promise<Spots> {
   const spots = await load<Spots>(`spots:${courseId}`, {});
@@ -82,12 +91,14 @@ export type Run = {
   coins: string[];
   // Next-tag codes for the stretches of trail where the arrow was turned on.
   arrowLegs: TagCode[];
+  // Tags whose hiding-spot photo the player peeked at.
+  hintTags: TagCode[];
 };
 
 export async function loadRun(): Promise<Run | null> {
   try {
     const raw = await AsyncStorage.getItem('run');
-    return raw ? { points: 0, coins: [], arrowLegs: [], ...JSON.parse(raw) } : null;
+    return raw ? { points: 0, coins: [], arrowLegs: [], hintTags: [], ...JSON.parse(raw) } : null;
   } catch {
     return null;
   }

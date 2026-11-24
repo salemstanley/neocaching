@@ -1,15 +1,18 @@
 import * as Location from 'expo-location';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Switch, Text, View } from 'react-native';
 import { POINTS, withArrow } from '../game/scoring';
 import { Game, SpotLocation, TAG_LABELS, TagCode } from '../game/types';
 import { COIN_RADIUS_M, coinsForLeg } from '../lib/coins';
+
 import { checkNearby, distanceM } from '../lib/location';
 import { cancelScan, nfcStatus, readTagCode } from '../lib/nfc';
 import { useGameSounds } from '../lib/sounds';
-import { Run, Spots, formatTime, loadSettings, loadSpots, runSeconds } from '../lib/storage';
+import { Photos, loadPhotos } from '../lib/photos';
+import { Run, Spots, formatTime, loadCourseSpots, loadSettings, runSeconds, spotsKey } from '../lib/storage';
 import { CacheMap, MapCache } from '../components/CacheMap';
+import { CoinAR } from '../components/CoinAR';
 import { ClueCard } from '../components/ClueCard';
 import { DirectionArrow } from '../components/DirectionArrow';
 import { Body, Button, Card, Screen, Title, colors } from '../components/ui';
@@ -36,6 +39,8 @@ export function Play({
   const [heading, setHeading] = useState<number | null>(null);
   const [showMap, setShowMap] = useState(false);
   const [popup, setPopup] = useState<{ text: string; good: boolean } | null>(null);
+  const [photos, setPhotos] = useState<Photos>({});
+  const [coinView, setCoinView] = useState(false);
   const { playCoin, playWarning } = useGameSounds();
 
   // Tags must be found in order. The clue for the next tag comes from the one
@@ -46,19 +51,21 @@ export function Play({
   const clue = nextIndex === 0 ? game.startClue : prev?.clue;
   const arrowOn = !!next && run.arrowLegs.includes(next.tag);
 
-  // Coins only exist between two tags whose spots are saved.
+  // Coins only exist between two saved spots (or from the course's start spot).
   const coins = useMemo(() => {
-    const from = prev && spots[prev.tag];
+    const from = prev ? spots[prev.tag] : game.startSpot;
     const to = next && spots[next.tag];
-    return next && from && to ? coinsForLeg(next.tag, from, to) : [];
-  }, [prev, next, spots]);
+    return next && from && to ? coinsForLeg(next.tag, from, to, game.bends?.[next.tag]) : [];
+  }, [prev, next, spots, game]);
 
   // The location callback outlives renders, so it reads the latest values here.
-  const latest = useRef({ run, coins, arrowOn, onRunChange, playCoin, playWarning });
-  latest.current = { run, coins, arrowOn, onRunChange, playCoin, playWarning };
+  const coinRadius = game.coinRadiusM ?? COIN_RADIUS_M;
+  const latest = useRef({ run, coins, arrowOn, onRunChange, playCoin, playWarning, coinRadius });
+  latest.current = { run, coins, arrowOn, onRunChange, playCoin, playWarning, coinRadius };
 
   useEffect(() => {
-    loadSpots(game.id).then(setSpots);
+    loadCourseSpots(game).then(setSpots);
+    loadPhotos(spotsKey(game)).then(setPhotos);
     const id = setInterval(() => setNow(Date.now()), 500);
     return () => {
       clearInterval(id);
@@ -79,7 +86,7 @@ export function Play({
           const here = { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
           setMe(here);
           const { run: r, coins: legCoins, arrowOn: arrow } = latest.current;
-          const hit = legCoins.find((c) => !r.coins.includes(c.id) && distanceM(here, c) <= COIN_RADIUS_M);
+          const hit = legCoins.find((c) => !r.coins.includes(c.id) && distanceM(here, c) <= latest.current.coinRadius);
           if (!hit) return;
           const points = hit.good ? withArrow(POINTS.coin, arrow) : POINTS.wrongWayCoin;
           latest.current.onRunChange({ ...r, coins: [...r.coins, hit.id], points: r.points + points });
@@ -121,6 +128,13 @@ export function Play({
     // Once the arrow has been used on a stretch, that stretch stays at half points.
     if (on && !run.arrowLegs.includes(next.tag)) onRunChange({ ...run, arrowLegs: [...run.arrowLegs, next.tag] });
   };
+
+  const hintPhoto = next ? photos[next.tag] : undefined;
+  const hintShown = !!next && run.hintTags.includes(next.tag);
+  const showHint = () => {
+    if (next && !hintShown) onRunChange({ ...run, hintTags: [...run.hintTags, next.tag], points: run.points + POINTS.hint });
+  };
+  const coinsLeft = coins.filter((c) => c.good && !run.coins.includes(c.id));
 
   const mapCaches: MapCache[] = game.checkpoints.flatMap((cp) => {
     const spot = spots[cp.tag];
@@ -185,7 +199,7 @@ export function Play({
             const done = run.done.includes(cp.tag);
             return (
               <Body key={cp.tag} style={{ color: done ? colors.good : colors.text }}>
-                {done ? '✅' : cp.tag === 'boss' ? '👑' : '⭐'} {cp.title}{' '}
+                {done ? '✅' : cp.prize?.emoji ?? (cp.tag === 'boss' ? '👑' : '⭐')} {cp.title}{' '}
                 <Body style={{ color: colors.muted, fontSize: 14 }}>({TAG_LABELS[cp.tag]})</Body>
               </Body>
             );
@@ -209,6 +223,26 @@ export function Play({
           <Button title="Tap a checkpoint tag" onPress={scan} />
         )}
         {message && <Body style={{ color: colors.gold }}>{message}</Body>}
+
+        {next && hintPhoto && (
+          <Card>
+            {hintShown ? (
+              <>
+                <Body style={{ fontWeight: '800' }}>Here's where {TAG_LABELS[next.tag]} is hidden:</Body>
+                <Image source={{ uri: hintPhoto }} style={{ width: '100%', aspectRatio: 3 / 4, borderRadius: 12 }} resizeMode="cover" />
+              </>
+            ) : (
+              <>
+                <Button kind="secondary" title="🔍 Show me the hiding spot" onPress={showHint} />
+                <Body style={{ color: colors.muted, fontSize: 14 }}>Shows a photo of where the tag is hidden. Costs {-POINTS.hint} points.</Body>
+              </>
+            )}
+          </Card>
+        )}
+
+        {coins.length > 0 && (
+          <Button kind="secondary" title={`🪙 Look for coins (${coinsLeft.length} left)`} onPress={() => setCoinView(true)} />
+        )}
 
         <Card>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -234,6 +268,8 @@ export function Play({
         <View style={{ height: 20 }} />
         <Button kind="secondary" title="Back to menu" onPress={onQuit} />
       </Screen>
+
+      {coinView && <CoinAR me={me} coins={coinsLeft} onClose={() => setCoinView(false)} />}
 
       {popup && (
         <View

@@ -1,4 +1,4 @@
-import { Checkpoint, Game, TAG_CODES } from './types';
+import { Checkpoint, Game, tagsForCount } from './types';
 
 // Starter content for a brand-new course, so it's playable right away and
 // easy to edit. Uses a mix of challenge types to show what's possible.
@@ -47,7 +47,7 @@ const STARTERS: Omit<Checkpoint, 'tag'>[] = [
     },
     winText: 'Exactly right!',
     loseText: 'Hmm, the answer was today!',
-    clue: 'The final stop awaits at Tag 5!',
+    clue: 'The final stop awaits at the Finish tag!',
   },
   {
     title: 'The Grand Finale',
@@ -58,21 +58,52 @@ const STARTERS: Omit<Checkpoint, 'tag'>[] = [
   },
 ];
 
-export function newCourse(): Game {
+// A filler stop for when a course grows.
+function extraStop(n: number): Omit<Checkpoint, 'tag'> {
   return {
+    title: `Stop ${n}`,
+    story: 'Another stop on the adventure!',
+    miniGame: { kind: 'speedTap', taps: 30, seconds: 10, label: 'Tap tap tap!' },
+    winText: 'Great job!',
+    loseText: 'So close!',
+    clue: 'Head to the next tag.',
+  };
+}
+
+// Changes how many tags a course uses (3 to 10). Stops are kept in order; the
+// final boss always stays last.
+export function resizeCourse(course: Game, count: number): Game {
+  const tags = tagsForCount(count);
+  const boss = course.checkpoints[course.checkpoints.length - 1];
+  const middle = course.checkpoints.slice(0, -1);
+  const stops: Omit<Checkpoint, 'tag'>[] = [];
+  for (let i = 0; i < tags.length - 1; i++) stops.push(middle[i] ?? extraStop(i));
+  stops.push(boss);
+  return {
+    ...course,
+    checkpoints: stops.map((stop, i) => {
+      const { tag: _old, ...rest } = stop as Checkpoint;
+      return { ...rest, tag: tags[i] };
+    }),
+  };
+}
+
+export function newCourse(count = 6): Game {
+  const course: Game = {
     id: `custom-${Date.now()}`,
     custom: true,
     title: 'My adventure',
     tagline: 'A custom Neocaching adventure.',
-    intro: 'Welcome to your adventure! Find all 6 tags to finish.',
+    intro: 'Welcome to your adventure! Find every tag to finish.',
     startClue: 'Find the tag marked Start to begin.',
     ending: 'You found every tag. Well done!',
     penaltySeconds: 30,
     timed: true,
     parMinutes: 30,
     starColor: '#F5B841',
-    checkpoints: TAG_CODES.map((tag, i) => ({ tag, ...STARTERS[i] })),
+    checkpoints: tagsForCount(6).map((tag, i) => ({ tag, ...STARTERS[i] })),
   };
+  return count === 6 ? course : resizeCourse(course, count);
 }
 
 // An editable copy of any course (e.g. a built-in one).

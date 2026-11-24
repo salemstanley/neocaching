@@ -6,6 +6,8 @@ export const POINTS = {
   coin: 10,
   wrongWayCoin: -10,
   cache: 100,
+  // Peeking at the photo of where a tag is hidden.
+  hint: -25,
 };
 
 export function withArrow(points: number, arrowOn: boolean) {

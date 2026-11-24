@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { Game, MiniGameKind, SpotLocation, TAG_CODES, TAG_LABELS, TagCode } from '../game/types';
+import { Game, MAX_TAGS, MIN_TAGS, MiniGameKind, SpotLocation, TAG_LABELS, TagCode, tagsForCount } from '../game/types';
 import { WizardInput, explainError, writeCourse } from '../lib/ai';
 import { getHere } from '../lib/location';
 import { Spots, loadSettings, saveCustomCourse, saveSpots } from '../lib/storage';
@@ -16,8 +16,14 @@ const CHALLENGES: { kind: MiniGameKind | 'surprise'; label: string }[] = [
   { kind: 'trivia', label: 'Trivia' },
   { kind: 'speedTap', label: 'Speed tap' },
   { kind: 'memory', label: 'Memory' },
+  { kind: 'wordSearch', label: 'Word search' },
+  { kind: 'merge', label: 'Merge (2048)' },
+  { kind: 'match3', label: 'Match 3' },
+  { kind: 'catch', label: 'Catch' },
   { kind: 'activity', label: 'Activity' },
 ];
+
+const blankStop = () => ({ hidingSpot: '', activityIdea: '', challenge: 'surprise' as const });
 
 type Draft = WizardInput & { spots: Spots };
 
@@ -27,7 +33,7 @@ const EMPTY: Draft = {
   storyIdea: '',
   extraNotes: '',
   timed: true,
-  stops: TAG_CODES.map(() => ({ hidingSpot: '', activityIdea: '', challenge: 'surprise' })),
+  stops: tagsForCount(6).map(blankStop),
   spots: {},
 };
 
@@ -65,6 +71,17 @@ export function CourseWizard({
   const set = (patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch }));
   const setStop = (i: number, patch: Partial<Draft['stops'][number]>) =>
     setDraft((d) => ({ ...d, stops: d.stops.map((s, j) => (j === i ? { ...s, ...patch } : s)) }));
+  const tags = tagsForCount(draft.stops.length);
+  const setTagCount = (n: number) => {
+    if (n < MIN_TAGS || n > MAX_TAGS) return;
+    setDraft((d) => {
+      // Keep the finale's answers on the last stop.
+      const middle = d.stops.slice(0, -1);
+      const last = d.stops[d.stops.length - 1];
+      const stops = [...Array.from({ length: n - 1 }, (_, i) => middle[i] ?? blankStop()), last];
+      return { ...d, stops, spots: {} };
+    });
+  };
   const setSpot = (tag: TagCode, spot: SpotLocation) => setDraft((d) => ({ ...d, spots: { ...d.spots, [tag]: spot } }));
 
   const saveHere = async (tag: TagCode) => {
@@ -149,12 +166,23 @@ export function CourseWizard({
           placeholder="Favorite things, inside jokes, how hard the clues should be"
           multiline
         />
+        <Body style={{ color: colors.muted, fontSize: 14 }}>How many tags? ({MIN_TAGS} to {MAX_TAGS}, the last one is the grand finale)</Body>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View style={{ width: 70 }}>
+            <Button kind="secondary" title="−" onPress={() => setTagCount(draft.stops.length - 1)} disabled={draft.stops.length <= MIN_TAGS} />
+          </View>
+          <Body style={{ color: colors.gold, fontSize: 28, fontWeight: '800', minWidth: 40, textAlign: 'center' }}>{String(draft.stops.length)}</Body>
+          <View style={{ width: 70 }}>
+            <Button kind="secondary" title="+" onPress={() => setTagCount(draft.stops.length + 1)} disabled={draft.stops.length >= MAX_TAGS} />
+          </View>
+        </View>
+        <Body style={{ color: colors.muted, fontSize: 13 }}>Changing this clears the spots you saved below.</Body>
         <Toggle label="Timed race" hint="Turn off for a relaxed pace, like a date." value={draft.timed} onChange={(timed) => set({ timed })} />
       </Card>
 
       {message && <Body style={{ color: colors.gold }}>{message}</Body>}
 
-      {TAG_CODES.map((tag, i) => {
+      {tags.map((tag, i) => {
         const stop = draft.stops[i];
         const spot = draft.spots[tag];
         return (
