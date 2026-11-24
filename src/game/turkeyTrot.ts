@@ -352,3 +352,50 @@ export const PAINTED_HILLS: Site = {
 };
 
 export const turkeyTrotGames: Game[] = turkeyTrotFor(PAINTED_HILLS);
+
+// A short, simple version for small test loops: 6 tags (Start, 1-4, Finish),
+// the classic dishes, medium games, no time penalty, and a relaxed clock.
+// Picks the plate, green beans, mashed potatoes, cranberries, turkey and the
+// Piecaken from the full course.
+const QUICK_STOPS = [0, 1, 2, 3, 5, 9];
+const QUICK_TAGS: TagCode[] = ['cp1', 'cp2', 'cp3', 'cp4', 'cp5', 'boss'];
+
+export function quickTurkeyTrot(opts: { id: string; location: string; spotsId: string; startClue: string; clues: string[] }): Game {
+  const checkpoints: Checkpoint[] = QUICK_TAGS.map((tag, i) => {
+    const stop = QUICK_STOPS[i];
+    const beat = BEATS[stop];
+    const prize = PRIZES.teens[stop];
+    return {
+      tag,
+      title: beat.title,
+      prize,
+      story: beat.story(prize),
+      winText: beat.win,
+      loseText: beat.lose,
+      clue: opts.clues[i],
+      miniGame: GAMES.teens[stop],
+    };
+  });
+  return {
+    id: opts.id,
+    title: 'Turkey Trot: Quick Gobble',
+    theme: 'Thanksgiving (short and simple)',
+    badge: 'All ages',
+    location: opts.location,
+    tagline: 'A short Thanksgiving dash: fill your plate at 6 tags and capture the Piecaken.',
+    intro:
+      'Oh no! Right before dinner, every dish on the Thanksgiving table jumped up and ran outside. Grab a plate, collect each dish, and capture the Piecaken before dinner gets cold.',
+    startClue: opts.startClue,
+    ending: 'Your plate is full and the Piecaken has been captured. Happy Thanksgiving!',
+    penaltySeconds: 0,
+    timed: true,
+    parMinutes: 30,
+    starColor: COLOR,
+    trailItems: ['🍴', '🍽️', '🥄', '🥤', '🧻', '🔪', '🫖', '🧂'],
+    trailName: 'table settings',
+    wrongWay: { emoji: '🦃', name: 'Turkey attack', points: -15, sound: 'turkey' },
+    spotsId: opts.spotsId,
+    rules: ['Go the wrong way and a turkey attacks!'],
+    checkpoints,
+  };
+}
