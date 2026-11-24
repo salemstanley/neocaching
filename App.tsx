@@ -18,6 +18,7 @@ import {
   saveRun,
   saveSettings,
 } from './src/lib/storage';
+import { ChoiceOutcome } from './src/components/minigames/Choice';
 import { CheckpointScreen } from './src/screens/CheckpointScreen';
 import { CourseEditor } from './src/screens/CourseEditor';
 import { CourseWizard } from './src/screens/CourseWizard';
@@ -66,14 +67,18 @@ export default function App() {
     setView({ name: 'play' });
   };
 
-  const checkpointDone = (tag: TagCode, won: boolean) => {
+  const checkpointDone = (tag: TagCode, won: boolean, outcome: ChoiceOutcome = {}) => {
     if (!run || !game) return;
+    // Finding the cache scores points whether or not the mini-game is won.
+    const earned = run.points + withArrow(POINTS.cache, run.arrowLegs.includes(tag)) + (outcome.bonus ?? 0);
+    // A yes-or-no stop can wipe out every point (said yes, then left early).
+    const lostIt = !!outcome.wipe;
     const next: Run = {
       ...run,
       done: [...run.done, tag],
-      // Finding the cache scores points whether or not the mini-game is won.
-      points: run.points + withArrow(POINTS.cache, run.arrowLegs.includes(tag)),
-      penaltySeconds: run.penaltySeconds + (won ? 0 : game.penaltySeconds),
+      points: lostIt ? 0 : earned,
+      // Leaving the ice cream shop early isn't a lost challenge, so no time penalty.
+      penaltySeconds: run.penaltySeconds + (won || lostIt ? 0 : game.penaltySeconds),
     };
     if (tag === 'boss') {
       setRun(next);
@@ -101,7 +106,7 @@ export default function App() {
     screen = <Play game={game} run={run} onRunChange={setRun} onCheckpoint={(tag) => setView({ name: 'checkpoint', tag })} onQuit={home} />;
   } else if (view.name === 'checkpoint' && game) {
     const checkpoint = game.checkpoints.find((c) => c.tag === view.tag)!;
-    screen = <CheckpointScreen game={game} checkpoint={checkpoint} onDone={(won) => checkpointDone(view.tag, won)} />;
+    screen = <CheckpointScreen game={game} checkpoint={checkpoint} onDone={(won, outcome) => checkpointDone(view.tag, won, outcome)} />;
   } else if (view.name === 'finish' && game) {
     screen = (
       <Finish

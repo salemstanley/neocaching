@@ -39,7 +39,11 @@ export type MiniGame =
   // Candy Crush style: swap neighbors to line up 3 or more of a kind.
   | { kind: 'match3'; pieces: string[]; target: number; moves: number }
   // Things fall from the top; tap the good ones, skip the bad ones.
-  | { kind: 'catch'; good: string[]; bad: string[]; target: number; seconds: number; speed: number };
+  | { kind: 'catch'; good: string[]; bad: string[]; target: number; seconds: number; speed: number }
+  // A yes-or-no choice (like stopping for ice cream). Both answers get a
+  // cheer. Yes earns bonus points, but only if the player stays nearby for
+  // stayMinutes; leaving early wipes out every point they have.
+  | { kind: 'choice'; question: string; yesLabel: string; noLabel: string; yesText: string; noText: string; stayMinutes: number; bonus: number };
 
 export type MiniGameKind = MiniGame['kind'];
 
@@ -87,6 +91,10 @@ export type Game = {
   rules?: string[];
   // Shown under the title on the home screen, e.g. "Ages 10 and under".
   badge?: string;
+  // Where the course is played, e.g. "Stanley - Painted Hills 5k". Players pick
+  // a location first, then a theme (one of the courses at that location).
+  location?: string;
+  theme?: string;
   // Where players set off from, if that isn't a tag (like home). The first
   // stretch of coins starts here.
   startSpot?: SpotLocation;

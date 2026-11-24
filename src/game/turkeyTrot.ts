@@ -1,18 +1,31 @@
 import { Checkpoint, Game, MiniGame, Prize, SpotLocation, TagCode } from './types';
 
-// Thanksgiving "Turkey Trot": a 3.1 mile loop around the Stanleys' house in
-// Bozeman, 10 tags, single player. All three age versions use the same hidden
-// tags (they share spotsId), so spots and photos only need setting up once.
+// Thanksgiving "Turkey Trot": a 5k loop with 10 tags, single player, in three
+// age versions. Each place it's played (a "site") brings its own tag spots and
+// clues. All versions at one site share the same hidden tags (spotsId), so
+// spots and photos only need setting up once.
 
-const SPOTS_ID = 'turkey-trot';
 const COLOR = '#E8873A';
+
+// Everything that changes from one place to another.
+export type Site = {
+  idPrefix: string; // e.g. 'turkey-trot' makes 'turkey-trot-kids'
+  location: string; // shown in the location picker
+  family: string; // whose house the feast is at, e.g. "the Stanleys'"
+  town: string;
+  spots: Partial<Record<TagCode, SpotLocation>>;
+  startClue: string;
+  clues: string[]; // 9 clues: after each stop, where the next tag is
+  // Stops that work differently here, by position (0 = Start), for every age.
+  overrides?: Record<number, { title: string; prize: Prize; story: string; winText: string; loseText: string; miniGame: MiniGame }>;
+};
 
 type Age = 'kids' | 'teens' | 'adults';
 
 const TAGS: TagCode[] = ['cp1', 'cp2', 'cp3', 'cp4', 'cp5', 'cp6', 'cp7', 'cp8', 'cp9', 'boss'];
 
-// From Salem's Google Maps pins (2026-11-24).
-const SPOTS: Partial<Record<TagCode, SpotLocation>> = {
+// Bozeman, from Salem's Google Maps pins (2026-11-24).
+const PAINTED_HILLS_SPOTS: Partial<Record<TagCode, SpotLocation>> = {
   cp1: { latitude: 45.6538927, longitude: -111.0106507 }, // front porch
   cp2: { latitude: 45.656357, longitude: -111.011326 }, // Painted Hills sign
   cp3: { latitude: 45.656322, longitude: -111.005939 }, // trailhead dog bag dispenser
@@ -26,7 +39,7 @@ const SPOTS: Partial<Record<TagCode, SpotLocation>> = {
 };
 
 // Where each tag is hidden. The clue after each stop points to the next one.
-const CLUES: string[] = [
+const PAINTED_HILLS_CLUES: string[] = [
   'Head out to the sign that says "Painted Hills". The tag is on the sign.',
   'Go to the Painted Hills trailhead. Look near the doggie poop bag dispenser.',
   'Find the stop sign where Bozeman Trail Road meets Arrowleaf Hills Road.',
@@ -192,7 +205,7 @@ const BEATS: Beat[] = [
   },
   {
     title: 'The Runaway Side Dish',
-    story: (p) => `There it is, hiding by the sign: ${p.name}! It wants to come home, but first it needs help gathering the bits that bounced out. Catch them!`,
+    story: (p) => `There it is, hiding right by the tag: ${p.name}! It wants to come home, but first it needs help gathering the bits that bounced out. Catch them!`,
     win: 'Every last bit is back in the dish. One dish down!',
     lose: 'A few bits got away, but the dish is coming home anyway.',
   },
@@ -222,7 +235,7 @@ const BEATS: Beat[] = [
   },
   {
     title: 'Sweet Potato Shuffle',
-    story: (p) => `You found ${p.name} hiding by the mailbox with a pile of holiday cards. Find every matching pair to win them over.`,
+    story: (p) => `You found ${p.name} hiding with a pile of holiday cards. Find every matching pair to win them over.`,
     win: 'Found them all! Onto the plate they go.',
     lose: 'They were sneaky, but you caught them in the end.',
   },
@@ -234,39 +247,42 @@ const BEATS: Beat[] = [
   },
   {
     title: 'Stuffing Stack',
-    story: (p) => `Under the crabapple tree you find ${p.name}. Build it up from bread to a full bowl by merging the pieces together.`,
-    win: 'The best stuffing in Bozeman. Your plate is almost full!',
+    story: (p) => `Right by the tag you find ${p.name}. Build it up from bread to a full bowl by merging the pieces together.`,
+    win: 'The best stuffing in town. Your plate is almost full!',
     lose: 'Not quite finished, but it smells amazing. Take it!',
   },
   {
     title: 'Boss: The Piecaken',
     story: (p) =>
-      `Your plate is full and you're almost home, but standing by the hoop is ${p.name}: a pie baked inside a cake, and it does NOT want to be dessert! Beat it by clearing its army of sweets.`,
+      `Your plate is full and you're almost home, but standing at the finish is ${p.name}: a pie baked inside a cake, and it does NOT want to be dessert! Beat it by clearing its army of sweets.`,
     win: 'The Piecaken is captured! Dinner is served!',
     lose: 'The Piecaken puts up a fight, then gives up and lets you have a slice.',
   },
 ];
 
-const AGES: Record<Age, { id: string; title: string; badge: string; par: number; penalty: number; rules: string[] }> = {
+const AGES: Record<Age, { suffix: string; title: string; theme: string; badge: string; par: number; penalty: number; rules: string[] }> = {
   kids: {
-    id: 'turkey-trot-kids',
+    suffix: 'kids',
     title: 'Turkey Trot: Little Gobblers',
+    theme: 'Thanksgiving Turkey Trot',
     badge: 'Ages 10 and under',
     par: 150,
     penalty: 0,
     rules: ['Stay with a grown-up the whole time.', "Losing a challenge doesn't add any time.", 'Go the wrong way and a turkey attacks!'],
   },
   teens: {
-    id: 'turkey-trot-teens',
+    suffix: 'teens',
     title: 'Turkey Trot: Junior Trotters',
+    theme: 'Thanksgiving Turkey Trot',
     badge: 'Ages 11 to 18',
     par: 100,
     penalty: 30,
     rules: ['Look both ways at every street crossing.', 'Go the wrong way and a turkey attacks!'],
   },
   adults: {
-    id: 'turkey-trot-adults',
+    suffix: 'adults',
     title: 'Turkey Trot: Grown-Up Gobblers',
+    theme: 'Thanksgiving Turkey Trot',
     badge: 'Adults',
     par: 80,
     penalty: 60,
@@ -274,9 +290,11 @@ const AGES: Record<Age, { id: string; title: string; badge: string; par: number;
   },
 };
 
-function makeGame(age: Age): Game {
+function makeGame(site: Site, age: Age): Game {
   const a = AGES[age];
   const checkpoints: Checkpoint[] = TAGS.map((tag, i) => {
+    const special = site.overrides?.[i];
+    if (special) return { tag, ...special, clue: site.clues[i] };
     const beat = BEATS[i];
     const prize = PRIZES[age][i];
     return {
@@ -286,18 +304,20 @@ function makeGame(age: Age): Game {
       story: beat.story(prize),
       winText: beat.win,
       loseText: beat.lose,
-      clue: CLUES[i],
+      clue: site.clues[i],
       miniGame: GAMES[age][i],
     };
   });
   return {
-    id: a.id,
+    id: `${site.idPrefix}-${a.suffix}`,
     title: a.title,
     badge: a.badge,
+    location: site.location,
+    theme: a.theme,
     tagline: 'The Thanksgiving dishes ran away! Fill your plate on a 3.1 mile loop and capture the Piecaken.',
     intro:
-      "Oh no! Right before dinner, every dish on the Stanleys' Thanksgiving table jumped up and trotted out the door. Grab a plate, follow the trail, collect each dish, and capture the Piecaken before dinner gets cold.",
-    startClue: 'Your first tag is on the front porch. Tap it to grab your plate!',
+      `Oh no! Right before dinner, every dish on ${site.family} Thanksgiving table jumped up and trotted out the door. Grab a plate, follow the trail, collect each dish, and capture the Piecaken before dinner gets cold.`,
+    startClue: site.startClue,
     ending: 'Your plate is full and the Piecaken has been captured. Happy Thanksgiving! Time to eat!',
     penaltySeconds: a.penalty,
     timed: true,
@@ -306,8 +326,8 @@ function makeGame(age: Age): Game {
     trailItems: ['🍴', '🍽️', '🥄', '🥤', '🧻', '🔪', '🫖', '🧂'],
     trailName: 'table settings',
     wrongWay: { emoji: '🦃', name: 'Turkey attack', points: -15, sound: 'turkey' },
-    spotsId: SPOTS_ID,
-    presetSpots: SPOTS,
+    spotsId: site.idPrefix,
+    presetSpots: site.spots,
     // Coins run in straight lines between tags, so give a little extra room
     // where the street curves away from them.
     coinRadiusM: 12,
@@ -316,4 +336,19 @@ function makeGame(age: Age): Game {
   };
 }
 
-export const turkeyTrotGames: Game[] = [makeGame('kids'), makeGame('teens'), makeGame('adults')];
+export function turkeyTrotFor(site: Site): Game[] {
+  return [makeGame(site, 'kids'), makeGame(site, 'teens'), makeGame(site, 'adults')];
+}
+
+export const PAINTED_HILLS: Site = {
+  // Kept as 'turkey-trot' so spots, photos and scores saved before stay put.
+  idPrefix: 'turkey-trot',
+  location: 'Stanley - Painted Hills 5k',
+  family: "the Stanleys'",
+  town: 'Bozeman',
+  spots: PAINTED_HILLS_SPOTS,
+  startClue: 'Your first tag is on the front porch. Tap it to grab your plate!',
+  clues: PAINTED_HILLS_CLUES,
+};
+
+export const turkeyTrotGames: Game[] = turkeyTrotFor(PAINTED_HILLS);

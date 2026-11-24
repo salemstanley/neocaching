@@ -19,6 +19,7 @@ export function Leaderboard({ courses, onBack }: { courses: Game[]; onBack: () =
         return (
           <Card key={game.id}>
             <Body style={{ fontWeight: '800', color: game.starColor }}>{game.title}</Body>
+            {game.location && <Body style={{ color: colors.muted, fontSize: 14 }}>{game.location}</Body>}
             {list.length === 0 && <Body style={{ color: colors.muted }}>No scores yet. Be the first!</Body>}
             {list.map((s, i) => (
               <View key={`${s.date}-${i}`} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
