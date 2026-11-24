@@ -6,14 +6,16 @@ import { Text, View } from 'react-native';
 import { distanceM, getHere } from '../../lib/location';
 import { Body, Button, Card, colors } from '../ui';
 
-export type ChoiceOutcome = { bonus?: number; wipe?: boolean };
+// timeCredit: seconds taken back off the clock, so staying costs no time.
+export type ChoiceOutcome = { bonus?: number; wipe?: boolean; timeCredit?: number };
 
 // Walking farther than this from where they said yes counts as leaving.
 const LEAVE_M = 75;
 
-// A yes-or-no stop, like "get ice cream?". Both answers get a cheer. Yes earns
-// the bonus only after staying nearby for stayMinutes. Leaving early (or
-// tapping "I'm leaving") wipes out every point, for lying.
+// A yes-or-no stop, like "get ice cream?". Both answers are the right one.
+// Saying yes pauses the clock while they stay, so stopping never hurts their
+// time, and staying the full stayMinutes adds a modest bonus on top. Leaving
+// early (or tapping "I'm leaving") wipes out every point, for lying.
 export function Choice({
   question,
   yesLabel,
@@ -87,7 +89,7 @@ export function Choice({
       <View style={{ gap: 12 }}>
         <Body style={{ fontSize: 20, fontWeight: '700' }}>{question}</Body>
         <Body style={{ color: colors.muted, fontSize: 14 }}>
-          Say yes and stay here for {stayMinutes} minutes to earn {bonus} bonus points. Say yes and leave early, and you lose ALL your points for lying.
+          It's up to you, and either way is the right call. If you stop, the clock pauses while you're here, and staying {stayMinutes} minutes earns {bonus} bonus points. Just don't say yes and then run off: that loses ALL your points.
         </Body>
         <Button title={yesLabel} onPress={() => setPhase('staying')} />
         <Button kind="secondary" title={noLabel} onPress={() => setPhase('no')} />
@@ -118,7 +120,7 @@ export function Choice({
         <Text style={{ color: colors.gold, fontSize: 56, fontWeight: '800', textAlign: 'center' }}>
           {m}:{s.toString().padStart(2, '0')}
         </Text>
-        <Body style={{ textAlign: 'center' }}>Stay here and enjoy it. Keep this screen open.</Body>
+        <Body style={{ textAlign: 'center' }}>The clock is paused. Stay here and enjoy it, and keep this screen open.</Body>
         {away !== null && <Body style={{ color: colors.muted, fontSize: 14, textAlign: 'center' }}>You're about {Math.round(away * 3.281)} ft from where you said yes.</Body>}
         <Button kind="secondary" title="I'm leaving early (lose all my points)" onPress={() => setPhase('busted')} />
       </View>
@@ -130,9 +132,9 @@ export function Choice({
       <View style={{ gap: 12 }}>
         <Card>
           <Text style={{ fontSize: 48, textAlign: 'center' }}>🎉</Text>
-          <Body style={{ fontWeight: '800', color: colors.good }}>You stayed! +{bonus} bonus points.</Body>
+          <Body style={{ fontWeight: '800', color: colors.good }}>You stayed! +{bonus} bonus points, and the time you spent here doesn't count.</Body>
         </Card>
-        <Button title="Continue" onPress={() => onDone(true, { bonus })} />
+        <Button title="Continue" onPress={() => onDone(true, { bonus, timeCredit: stayMinutes * 60 })} />
       </View>
     );
   }

@@ -38,20 +38,20 @@ export const LITTLE_VALLEY: Site = {
       title: 'The Alumni Creamery',
       prize: { emoji: '🍦', name: 'a scoop of ice cream' },
       story:
-        'The dessert course made a run for it and ended up at the Alumni Creamery. Since you are here anyway… you could get some ice cream for extra points. Your call.',
+        "The dessert course made a run for it and ended up at the Alumni Creamery. Since you're here, you might think about stopping for a scoop. No pressure, just an option.",
       winText: 'Back on the trail!',
       loseText: 'Back on the trail, with a little less dignity.',
       miniGame: {
         kind: 'choice',
-        question: 'Do you get ice cream?',
+        question: 'Want to stop for ice cream?',
         yesLabel: '🍦 Yes, treat me!',
         noLabel: '✋ No thanks',
         yesText:
-          "Yes! Congratulations on treating yourself (and maybe your loved ones), supporting a local business, taking care of your needs, and your rare ability to stop and really enjoy life. Now stay here for 4 minutes and enjoy it.",
+          "Yes! Congratulations on treating yourself (and maybe your loved ones), supporting a local business, taking care of your needs, and your rare ability to stop and really enjoy life. You made the right call. The clock is paused, so stay here for 4 minutes and enjoy it.",
         noText:
-          "High five! You rejected consumerism. You showed real self-control by not indulging. Your frugality is inspiring. And your poor planning proves you're all business, with no time to waste on trivial things like ice cream.",
+          "High five! You made the right call. You rejected consumerism. You showed real self-control by not indulging. Your frugality is inspiring. And your poor planning proves you're all business, with no time to waste on trivial things like ice cream.",
         stayMinutes: 4,
-        bonus: 150,
+        bonus: 60,
       },
     },
   },

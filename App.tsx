@@ -78,7 +78,7 @@ export default function App() {
       done: [...run.done, tag],
       points: lostIt ? 0 : earned,
       // Leaving the ice cream shop early isn't a lost challenge, so no time penalty.
-      penaltySeconds: run.penaltySeconds + (won || lostIt ? 0 : game.penaltySeconds),
+      penaltySeconds: run.penaltySeconds + (won || lostIt ? 0 : game.penaltySeconds) - (outcome.timeCredit ?? 0),
     };
     if (tag === 'boss') {
       setRun(next);
