@@ -11,14 +11,13 @@ type Age = 'kids' | 'teens' | 'adults';
 
 const TAGS: TagCode[] = ['cp1', 'cp2', 'cp3', 'cp4', 'cp5', 'cp6', 'cp7', 'cp8', 'cp9', 'boss'];
 
-// From Salem's Google Maps pins (2026-11-24). Tag 3 (Bergamont Ct) had no pin
-// yet, so it is set on the spot in the app.
+// From Salem's Google Maps pins (2026-11-24).
 const SPOTS: Partial<Record<TagCode, SpotLocation>> = {
   cp1: { latitude: 45.6538927, longitude: -111.0106507 }, // front porch
   cp2: { latitude: 45.656357, longitude: -111.011326 }, // Painted Hills sign
   cp3: { latitude: 45.656322, longitude: -111.005939 }, // trailhead dog bag dispenser
   cp4: { latitude: 45.65641, longitude: -110.996593 }, // stop sign, Bozeman Trail Rd & Arrowleaf Hills Rd
-  // cp5: Bergamont Ct & Arrowleaf Hills Rd, not pinned yet
+  cp5: { latitude: 45.65126, longitude: -110.996804 }, // trees behind Bergamont Ct & Arrowleaf Hills Rd sign
   cp6: { latitude: 45.649662, longitude: -111.003042 }, // Boreal Way & Arrowleaf Hills Rd
   cp7: { latitude: 45.644336, longitude: -111.007392 }, // mailbox for 151 McGee
   cp8: { latitude: 45.650252, longitude: -111.008593 }, // McGee & Cook Ct sign
