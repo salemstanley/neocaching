@@ -57,6 +57,7 @@ export function Home({
       {courses.map((game) => (
         <Card key={game.id}>
           <Text style={{ color: game.starColor, fontSize: 22, fontWeight: '800' }}>{game.title}</Text>
+          {game.badge && <Body style={{ color: colors.muted, fontSize: 14 }}>{game.badge}</Body>}
           <Body>{game.tagline}</Body>
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <View style={{ flex: 2 }}>

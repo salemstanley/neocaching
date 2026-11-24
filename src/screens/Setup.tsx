@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Switch, TextInput, View } from 'react-native';
-import { TAG_CODES, TAG_LABELS as LABELS, TagCode } from '../game/types';
+import { TAG_LABELS as LABELS, TagCode } from '../game/types';
+
+// The order of the numbers on the stickers.
+const WRITE_ORDER: TagCode[] = ['cp1', 'cp2', 'cp3', 'cp4', 'cp5', 'boss', 'cp6', 'cp7', 'cp8', 'cp9'];
 import { cancelScan, nfcStatus, writeTagCode } from '../lib/nfc';
 import { Settings, loadSettings, saveSettings } from '../lib/storage';
 import { Body, Button, Card, Screen, Title, colors } from '../components/ui';
 
-// Write the 6 physical tags (they work with every course) and change settings.
+// Write the physical tags (they work with every course) and change settings.
 // Where each tag is hidden is set per course, in the course editor.
 export function Setup({ onBack }: { onBack: () => void }) {
   const [settings, setSettings] = useState<Settings>({ skipGps: false, playerName: '', anthropicKey: '' });
@@ -41,13 +44,13 @@ export function Setup({ onBack }: { onBack: () => void }) {
     <Screen>
       <Title>Tags and settings</Title>
       <Body style={{ color: colors.muted }}>
-        You only need to write each tag once. The same 6 tags work with every course. Tap a button and hold a blank tag to the back of your phone.
+        You only need to write each tag once. The same tags work with every course. A course uses 3 to 10 of them. Tap a button and hold a blank tag to the back of your phone.
       </Body>
 
       {message && <Body style={{ color: colors.gold }}>{message}</Body>}
 
       <Card>
-        {TAG_CODES.map((tag) => (
+        {WRITE_ORDER.map((tag) => (
           <Button
             key={tag}
             title={busy === tag ? 'Hold the tag to your phone…' : `Write ${LABELS[tag]}`}

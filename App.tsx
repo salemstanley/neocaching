@@ -25,6 +25,7 @@ import { Finish } from './src/screens/Finish';
 import { Home } from './src/screens/Home';
 import { Leaderboard } from './src/screens/Leaderboard';
 import { Play } from './src/screens/Play';
+import { Rules } from './src/screens/Rules';
 import { Setup } from './src/screens/Setup';
 
 type View =
@@ -36,7 +37,8 @@ type View =
   | { name: 'setup' }
   | { name: 'demo' }
   | { name: 'edit'; course: Game }
-  | { name: 'wizard' };
+  | { name: 'wizard' }
+  | { name: 'rules'; game: Game };
 
 export default function App() {
   const [view, setView] = useState<View>({ name: 'home' });
@@ -60,7 +62,7 @@ export default function App() {
   const game: Game | undefined = run ? findGame(courses, run.gameId) : undefined;
 
   const startGame = (g: Game) => {
-    setRun({ gameId: g.id, startedAt: Date.now(), penaltySeconds: 0, done: [], points: 0, coins: [], arrowLegs: [] });
+    setRun({ gameId: g.id, startedAt: Date.now(), penaltySeconds: 0, done: [], points: 0, coins: [], arrowLegs: [], hintTags: [] });
     setView({ name: 'play' });
   };
 
@@ -111,6 +113,8 @@ export default function App() {
         onSave={(name) => saveScore(name, view.seconds, view.points + view.bonus)}
       />
     );
+  } else if (view.name === 'rules') {
+    screen = <Rules game={view.game} onStart={() => startGame(view.game)} onBack={home} />;
   } else if (view.name === 'leaderboard') {
     screen = <Leaderboard courses={courses} onBack={home} />;
   } else if (view.name === 'setup') {
@@ -160,7 +164,7 @@ export default function App() {
           await refreshCourses();
           setView({ name: 'edit', course });
         }}
-        onStart={startGame}
+        onStart={(g) => setView({ name: 'rules', game: g })}
         onResume={() => setView({ name: 'play' })}
         onLeaderboard={() => setView({ name: 'leaderboard' })}
         onSetup={() => setView({ name: 'setup' })}
