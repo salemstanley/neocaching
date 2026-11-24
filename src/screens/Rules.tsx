@@ -20,7 +20,7 @@ export function Rules({ game, onStart, onBack }: { game: Game; onStart: () => vo
     <Screen>
       <Title>How to play</Title>
       <Body style={{ color: game.starColor, fontSize: 22, fontWeight: '800' }}>{game.title}</Body>
-      {game.badge && <Body style={{ color: colors.muted }}>{game.badge}</Body>}
+      {(game.location || game.badge) && <Body style={{ color: colors.muted }}>{[game.location, game.badge].filter(Boolean).join(' · ')}</Body>}
 
       <Card>
         <Body>1. Read the clue and find the hidden tag. There are {game.checkpoints.length} tags, and you have to find them in order.</Body>

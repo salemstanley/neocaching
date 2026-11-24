@@ -5,6 +5,8 @@ import { Game } from './types';
 export const pioneerGame: Game = {
   id: 'pioneer',
   title: 'Red Rock Pioneers',
+  location: 'Salem - Test course',
+  theme: 'Red Rock Pioneers',
   tagline: 'Survive your first year in 1860s St. George.',
   starColor: '#F5B841',
   penaltySeconds: 30,

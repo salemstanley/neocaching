@@ -19,6 +19,7 @@ const KIND_LABELS: Record<MiniGameKind, string> = {
   merge: 'Merge (like 2048)',
   match3: 'Match 3',
   catch: 'Catch the falling things',
+  choice: 'Yes or no (stay for a bonus)',
 };
 
 const DEFAULT_GAMES: Record<MiniGameKind, MiniGame> = {
@@ -30,6 +31,16 @@ const DEFAULT_GAMES: Record<MiniGameKind, MiniGame> = {
   merge: { kind: 'merge', ladder: ['🌱', '🌿', '🌷', '💐', '🌳', '🏡'], goal: 4, seconds: 120 },
   match3: { kind: 'match3', pieces: ['🍎', '🍊', '🍋', '🍇', '🫐'], target: 40, moves: 20 },
   catch: { kind: 'catch', good: ['🎁', '🎈'], bad: ['💣'], target: 15, seconds: 30, speed: 1 },
+  choice: {
+    kind: 'choice',
+    question: 'Want to stop for a treat?',
+    yesLabel: 'Yes!',
+    noLabel: 'No thanks',
+    yesText: 'Good for you! Enjoy it.',
+    noText: 'All business. Respect.',
+    stayMinutes: 4,
+    bonus: 150,
+  },
 };
 
 // Make or change a course: its story, each stop's challenge and clue, and
@@ -133,6 +144,7 @@ export function CourseEditor({
   return (
     <Screen>
       <Title>{editable ? 'Edit course' : course.title}</Title>
+      {!editable && course.location && <Body style={{ color: colors.muted }}>{course.location}</Body>}
       {!editable && (
         <Card>
           <Body>This course comes with the app. You can choose where its tags go. To change the story, make your own copy.</Body>
@@ -388,6 +400,20 @@ function ChallengeFields({ game, onChange }: { game: MiniGame; onChange: (g: Min
           onChange={(v) => onChange({ ...game, speed: Math.max(0.5, Math.min(3, parseFloat(v) || 1)) })}
           numeric
         />
+      </>
+    );
+  }
+
+  if (game.kind === 'choice') {
+    return (
+      <>
+        <Field label="Question" value={game.question} onChange={(question) => onChange({ ...game, question })} multiline />
+        <Field label="Yes button" value={game.yesLabel} onChange={(yesLabel) => onChange({ ...game, yesLabel })} />
+        <Field label="Cheer for yes" value={game.yesText} onChange={(yesText) => onChange({ ...game, yesText })} multiline />
+        <Field label="No button" value={game.noLabel} onChange={(noLabel) => onChange({ ...game, noLabel })} />
+        <Field label="Cheer for no" value={game.noText} onChange={(noText) => onChange({ ...game, noText })} multiline />
+        <Field label="Minutes they must stay after yes" value={String(game.stayMinutes)} onChange={(v) => onChange({ ...game, stayMinutes: Math.max(1, parseInt(v, 10) || 1) })} numeric />
+        <Field label="Bonus points for staying" value={String(game.bonus)} onChange={(v) => onChange({ ...game, bonus: Math.max(0, parseInt(v, 10) || 0) })} numeric />
       </>
     );
   }
