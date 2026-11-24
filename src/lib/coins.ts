@@ -7,7 +7,8 @@ export const COIN_SPACING_M = 7.62;
 // 3-5 m, so this is a little generous.
 export const COIN_RADIUS_M = 7;
 
-export type Coin = SpotLocation & { id: string; good: boolean };
+// symbol: what to show instead of a coin (set by courses with trail items).
+export type Coin = SpotLocation & { id: string; good: boolean; symbol?: string };
 
 // Coins for the stretch of trail from one tag to the next. Good coins sit
 // every 25 feet along the path between the two tags: a straight line, or

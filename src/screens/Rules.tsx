@@ -26,7 +26,9 @@ export function Rules({ game, onStart, onBack }: { game: Game; onStart: () => vo
         <Body>1. Read the clue and find the hidden tag. There are {game.checkpoints.length} tags, and you have to find them in order.</Body>
         <Body>2. Tap the back of your phone on the tag. You have to be standing near it.</Body>
         <Body>3. Catch what floats up in the camera, read the story, and play the challenge.</Body>
-        <Body>4. Walk the trail to the next tag. Coins float along the way. Tap "Look for coins" to see where they are.</Body>
+        <Body>
+          4. Walk the trail to the next tag. {game.trailName ? `${game.trailName[0].toUpperCase()}${game.trailName.slice(1)}` : 'Coins'} float along the right way. Tap "Look for {game.trailName ?? 'coins'}" to see where they are.
+        </Body>
         <Body>5. Find the last tag and beat the final challenge to finish!</Body>
         {game.rules?.map((rule, i) => (
           <Body key={i}>• {rule}</Body>
@@ -36,9 +38,12 @@ export function Rules({ game, onStart, onBack }: { game: Game; onStart: () => vo
       <Card>
         <Body style={{ fontWeight: '800', fontSize: 20 }}>Points</Body>
         <Row label="Each tag you find" points={`+${POINTS.cache}`} />
-        <Row label="Each coin on the right path" points={`+${POINTS.coin}`} />
-        <Row label="Wrong-way coin (you hear a buzz)" points={`${POINTS.wrongWayCoin}`} />
-        <Row label="Direction arrow on (coins and tag on that stretch)" points="Half" />
+        <Row label={`Each of the ${game.trailName ?? 'coins'} on the right path`} points={`+${POINTS.coin}`} />
+        <Row
+          label={game.wrongWay ? `Going the wrong way: ${game.wrongWay.name.toLowerCase()}!` : 'Wrong-way coin (you hear a buzz)'}
+          points={`${game.wrongWay?.points ?? POINTS.wrongWayCoin}`}
+        />
+        <Row label={`Direction arrow on (${game.trailName ?? 'coins'} and tag on that stretch)`} points="Half" />
         <Row label='"Show me the hiding spot" photo' points={`${POINTS.hint}`} />
         {timed && <Row label={`Time bonus: each second under ${par} minutes`} points="+1" />}
         {timed && game.penaltySeconds > 0 && <Row label="Losing a challenge adds time" points={`+${game.penaltySeconds}s`} />}

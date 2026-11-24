@@ -3,11 +3,13 @@ import { useEffect } from 'react';
 
 const COIN = require('../../assets/sounds/coin.wav');
 const WARNING = require('../../assets/sounds/warning.wav');
+const TURKEY = require('../../assets/sounds/turkey.wav');
 
-// Coin "cha-ching" for the right way, a buzz for the wrong way.
+// Coin "cha-ching" for the right way, a buzz (or an angry turkey) for the wrong way.
 export function useGameSounds() {
   const coin = useAudioPlayer(COIN);
   const warning = useAudioPlayer(WARNING);
+  const turkey = useAudioPlayer(TURKEY);
 
   useEffect(() => {
     setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'mixWithOthers' }).catch(() => {});
@@ -18,5 +20,5 @@ export function useGameSounds() {
     player.play();
   };
 
-  return { playCoin: () => play(coin), playWarning: () => play(warning) };
+  return { playCoin: () => play(coin), playWarning: () => play(warning), playTurkey: () => play(turkey) };
 }

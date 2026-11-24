@@ -99,6 +99,12 @@ export type Game = {
   // How close you need to walk to a coin, in meters. Defaults to 7. Bigger is
   // kinder when coins run in a straight line across curvy streets.
   coinRadiusM?: number;
+  // What floats along the right path instead of coins (emoji, used in turn),
+  // and what to call them, e.g. "table settings".
+  trailItems?: string[];
+  trailName?: string;
+  // What happens on a wrong-way coin instead of the buzz, e.g. a turkey attack.
+  wrongWay?: { emoji: string; name: string; points: number; sound: 'buzz' | 'turkey' };
 };
 
 // Where each tag is stuck in the real world. Each course has its own set.

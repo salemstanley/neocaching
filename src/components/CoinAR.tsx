@@ -34,7 +34,7 @@ function CoinPicture({ size }: { size: number }) {
 
 // Look through the camera and see the coins floating in the direction they
 // are. Turn around to find more. Walking to them still picks them up.
-export function CoinAR({ me, coins, onClose }: { me: SpotLocation | null; coins: Coin[]; onClose: () => void }) {
+export function CoinAR({ me, coins, name = 'coins', onClose }: { me: SpotLocation | null; coins: Coin[]; name?: string; onClose: () => void }) {
   const [permission, requestPermission] = useCameraPermissions();
   const [heading, setHeading] = useState<number | null>(null);
   const { width, height } = useWindowDimensions();
@@ -84,10 +84,10 @@ export function CoinAR({ me, coins, onClose }: { me: SpotLocation | null; coins:
   let status: string;
   if (!me) status = 'Finding your location…';
   else if (heading === null) status = 'Finding which way you are facing…';
-  else if (coins.length === 0) status = 'No coins left on this stretch. Head for the next tag!';
-  else if (placed.length === 0) status = 'The coins are too far away to see. Keep walking toward the next tag.';
-  else if (inView.length) status = `${inView.length} coin${inView.length === 1 ? '' : 's'} ahead! Walk to them to grab them.`;
-  else status = 'Turn around slowly to find the coins.';
+  else if (coins.length === 0) status = `No ${name} left on this stretch. Head for the next tag!`;
+  else if (placed.length === 0) status = `The ${name} are too far away to see. Keep walking toward the next tag.`;
+  else if (inView.length) status = `${inView.length} ahead! Walk to them to grab them.`;
+  else status = `Turn around slowly to find the ${name}.`;
 
   return (
     <View style={StyleSheet.absoluteFill}>
@@ -104,7 +104,13 @@ export function CoinAR({ me, coins, onClose }: { me: SpotLocation | null; coins:
         const y = height * 0.62 - (Math.min(d, 60) / 60) * height * 0.2 - size / 2;
         return (
           <Animated.View key={coin.id} pointerEvents="none" style={{ position: 'absolute', left: x, top: y, transform: [{ scaleX }] }}>
-            <CoinPicture size={size} />
+            {coin.symbol ? (
+              <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: size * 0.8 }}>{coin.symbol}</Text>
+              </View>
+            ) : (
+              <CoinPicture size={size} />
+            )}
           </Animated.View>
         );
       })}
@@ -122,11 +128,11 @@ export function CoinAR({ me, coins, onClose }: { me: SpotLocation | null; coins:
 
       <View style={styles.banner} pointerEvents="none">
         <Text style={styles.bannerText}>{status}</Text>
-        {nearest !== null && <Text style={styles.small}>Nearest coin: about {Math.round(nearest * 3.281)} ft</Text>}
+        {nearest !== null && <Text style={styles.small}>Nearest one: about {Math.round(nearest * 3.281)} ft</Text>}
       </View>
 
       <Pressable onPress={onClose} style={styles.close}>
-        <Text style={styles.closeText}>Close the coin view</Text>
+        <Text style={styles.closeText}>Close the camera</Text>
       </Pressable>
     </View>
   );
