@@ -1,7 +1,8 @@
+import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Image, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, Animated, Image, Switch, Text, View } from 'react-native';
 import { POINTS, withArrow } from '../game/scoring';
 import { Game, SpotLocation, TAG_LABELS, TagCode } from '../game/types';
 import { COIN_RADIUS_M, coinsForLeg } from '../lib/coins';
@@ -41,7 +42,8 @@ export function Play({
   const [popup, setPopup] = useState<{ text: string; good: boolean } | null>(null);
   const [photos, setPhotos] = useState<Photos>({});
   const [coinView, setCoinView] = useState(false);
-  const { playCoin, playWarning } = useGameSounds();
+  const { playCoin, playWarning, playTurkey } = useGameSounds();
+  const [attack, setAttack] = useState(false);
 
   // Tags must be found in order. The clue for the next tag comes from the one
   // before it (or the game's start clue).
@@ -55,13 +57,15 @@ export function Play({
   const coins = useMemo(() => {
     const from = prev ? spots[prev.tag] : game.startSpot;
     const to = next && spots[next.tag];
-    return next && from && to ? coinsForLeg(next.tag, from, to, game.bends?.[next.tag]) : [];
+    if (!next || !from || !to) return [];
+    const items = game.trailItems;
+    return coinsForLeg(next.tag, from, to, game.bends?.[next.tag]).map((c, i) => (items?.length && c.good ? { ...c, symbol: items[i % items.length] } : c));
   }, [prev, next, spots, game]);
 
   // The location callback outlives renders, so it reads the latest values here.
   const coinRadius = game.coinRadiusM ?? COIN_RADIUS_M;
-  const latest = useRef({ run, coins, arrowOn, onRunChange, playCoin, playWarning, coinRadius });
-  latest.current = { run, coins, arrowOn, onRunChange, playCoin, playWarning, coinRadius };
+  const latest = useRef({ run, coins, arrowOn, onRunChange, playCoin, playWarning, playTurkey, coinRadius, game });
+  latest.current = { run, coins, arrowOn, onRunChange, playCoin, playWarning, playTurkey, coinRadius, game };
 
   useEffect(() => {
     loadCourseSpots(game).then(setSpots);
@@ -88,11 +92,20 @@ export function Play({
           const { run: r, coins: legCoins, arrowOn: arrow } = latest.current;
           const hit = legCoins.find((c) => !r.coins.includes(c.id) && distanceM(here, c) <= latest.current.coinRadius);
           if (!hit) return;
-          const points = hit.good ? withArrow(POINTS.coin, arrow) : POINTS.wrongWayCoin;
+          const wrongWay = latest.current.game.wrongWay;
+          const points = hit.good ? withArrow(POINTS.coin, arrow) : wrongWay?.points ?? POINTS.wrongWayCoin;
           latest.current.onRunChange({ ...r, coins: [...r.coins, hit.id], points: r.points + points });
           if (hit.good) latest.current.playCoin();
+          else if (wrongWay?.sound === 'turkey') latest.current.playTurkey();
           else latest.current.playWarning();
-          setPopup({ text: hit.good ? `🪙 +${points}` : `⚠️ Wrong way! ${points}`, good: hit.good });
+          if (!hit.good && wrongWay) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
+            setAttack(true);
+          }
+          setPopup({
+            text: hit.good ? `${hit.symbol ?? '🪙'} +${points}` : wrongWay ? `${wrongWay.name}! ${points}` : `⚠️ Wrong way! ${points}`,
+            good: hit.good,
+          });
         },
       );
       if (cancelled) sub.remove();
@@ -116,6 +129,12 @@ export function Play({
       sub?.remove();
     };
   }, [arrowOn]);
+
+  useEffect(() => {
+    if (!attack) return;
+    const id = setTimeout(() => setAttack(false), 1600);
+    return () => clearTimeout(id);
+  }, [attack]);
 
   useEffect(() => {
     if (!popup) return;
@@ -241,7 +260,7 @@ export function Play({
         )}
 
         {coins.length > 0 && (
-          <Button kind="secondary" title={`🪙 Look for coins (${coinsLeft.length} left)`} onPress={() => setCoinView(true)} />
+          <Button kind="secondary" title={`${game.trailItems?.[0] ?? '🪙'} Look for ${game.trailName ?? 'coins'} (${coinsLeft.length} left)`} onPress={() => setCoinView(true)} />
         )}
 
         <Card>
@@ -269,7 +288,9 @@ export function Play({
         <Button kind="secondary" title="Back to menu" onPress={onQuit} />
       </Screen>
 
-      {coinView && <CoinAR me={me} coins={coinsLeft} onClose={() => setCoinView(false)} />}
+      {coinView && <CoinAR me={me} coins={coinsLeft} name={game.trailName} onClose={() => setCoinView(false)} />}
+
+      {attack && game.wrongWay && <Attack emoji={game.wrongWay.emoji} />}
 
       {popup && (
         <View
@@ -287,6 +308,29 @@ export function Play({
           <Text style={{ color: colors.bg, fontSize: 28, fontWeight: '900' }}>{popup.text}</Text>
         </View>
       )}
+    </View>
+  );
+}
+
+// A wrong-way attacker (like an angry turkey) charges at the screen.
+function Attack({ emoji }: { emoji: string }) {
+  const charge = useRef(new Animated.Value(0)).current;
+  const shake = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(charge, { toValue: 1, duration: 450, useNativeDriver: true }).start();
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shake, { toValue: 1, duration: 60, useNativeDriver: true }),
+        Animated.timing(shake, { toValue: -1, duration: 60, useNativeDriver: true }),
+      ]),
+      { iterations: 10 },
+    ).start();
+  }, [charge, shake]);
+  const scale = charge.interpolate({ inputRange: [0, 1], outputRange: [0.2, 1.6] });
+  const translateX = shake.interpolate({ inputRange: [-1, 1], outputRange: [-18, 18] });
+  return (
+    <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,60,60,0.25)' }}>
+      <Animated.Text style={{ fontSize: 160, transform: [{ scale }, { translateX }] }}>{emoji}</Animated.Text>
     </View>
   );
 }

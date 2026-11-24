@@ -80,25 +80,33 @@ const PRIZES: Record<Age, Prize[]> = {
 };
 
 // Same kind of game at each stop for every age, but harder the older you get.
+// The games mix holiday traditions: history (the storybook version for kids,
+// the less flattering version for grown-ups), food, the turkey trot itself,
+// Black Friday and football.
+const q = (question: string, answers: string[], correctIndex: number) => ({ question, answers, correctIndex });
+
 const GAMES: Record<Age, MiniGame[]> = {
   kids: [
     {
       kind: 'trivia',
-      questions: [{ question: 'What holiday is it?', answers: ['Halloween', 'Thanksgiving', 'Easter', 'Groundhog Day'], correctIndex: 1 }],
+      questions: [
+        q('The Pilgrims sailed to America on a ship called the…', ['Rubber Duck', 'Mayflower', 'Titanic', 'Big Pumpkin'], 1),
+        q('Who helped the Pilgrims learn to grow corn?', ['Pirates', 'Robots', 'The Wampanoag people', 'Santa Claus'], 2),
+      ],
     },
     { kind: 'catch', good: ['🧀', '🍝'], bad: [], target: 10, seconds: 40, speed: 0.8 },
-    { kind: 'speedTap', taps: 25, seconds: 12, label: 'Mash the potatoes!' },
+    { kind: 'speedTap', taps: 25, seconds: 12, label: 'Run, run, run!' },
     { kind: 'match3', pieces: ['🍒', '🍎', '🍇', '🍐'], target: 25, moves: 25 },
-    { kind: 'wordSearch', words: ['PIE', 'ROLL', 'CORN', 'YUM', 'FALL'], size: 7, seconds: 240 },
+    { kind: 'catch', good: ['🧸', '🎮', '🎁'], bad: [], target: 10, seconds: 40, speed: 0.8 },
     {
       kind: 'trivia',
       questions: [
-        { question: 'What sound does a turkey make?', answers: ['Moo', 'Gobble gobble', 'Quack', 'Oink'], correctIndex: 1 },
-        { question: 'What month is Thanksgiving in?', answers: ['July', 'March', 'November', 'December'], correctIndex: 2 },
+        q('What shape is a football?', ['Round like a ball', 'Square', 'Oval with pointy ends', 'Like a star'], 2),
+        q('What sound does a turkey make?', ['Moo', 'Gobble gobble', 'Quack', 'Oink'], 1),
       ],
     },
-    { kind: 'memory', symbols: ['🍠', '🥧', '🍎', '🍂', '🌽', '🦃'], seconds: 150 },
-    { kind: 'catch', good: ['🌽'], bad: [], target: 12, seconds: 40, speed: 0.9 },
+    { kind: 'memory', symbols: ['🦃', '🏈', '🥧', '🍂', '🌽', '🎁'], seconds: 150 },
+    { kind: 'wordSearch', words: ['PIE', 'CORN', 'BALL', 'SHOP', 'YUM'], size: 7, seconds: 240 },
     { kind: 'merge', ladder: ['🍞', '🧈', '🥣', '🍲', '🍽️'], goal: 3, seconds: 180 },
     { kind: 'match3', pieces: ['🥧', '🎂', '🍰', '🧁'], target: 30, moves: 25 },
   ],
@@ -106,31 +114,28 @@ const GAMES: Record<Age, MiniGame[]> = {
     {
       kind: 'trivia',
       questions: [
-        {
-          question: 'Thanksgiving in the US is always on which day of the week?',
-          answers: ['Monday', 'Wednesday', 'Thursday', 'Friday'],
-          correctIndex: 2,
-        },
+        q('The 1621 harvest feast we now call the first Thanksgiving lasted about how long?', ['One hour', 'One afternoon', 'Three days', 'Two weeks'], 2),
+        q(
+          'Squanto (Tisquantum) already spoke English when he met the Pilgrims. Why?',
+          ['He learned it from a book', 'He had been kidnapped and taken to Europe', 'He invented it', 'Lucky guess'],
+          1,
+        ),
       ],
     },
     { kind: 'catch', good: ['🫛', '🧅'], bad: ['🐛'], target: 15, seconds: 30, speed: 1.2 },
-    { kind: 'speedTap', taps: 40, seconds: 10, label: 'Mash the potatoes!' },
+    { kind: 'speedTap', taps: 40, seconds: 10, label: 'Sprint!' },
     { kind: 'match3', pieces: ['🍒', '🍊', '🍎', '🍇', '🍐'], target: 40, moves: 20 },
-    { kind: 'wordSearch', words: ['TURKEY', 'GRAVY', 'STUFFING', 'PILGRIM', 'HARVEST', 'ROLLS'], size: 10, seconds: 180 },
+    { kind: 'catch', good: ['🏷️', '🎮', '📱'], bad: ['💸'], target: 15, seconds: 30, speed: 1.3 },
     {
       kind: 'trivia',
       questions: [
-        { question: 'Which ship brought the Pilgrims to America in 1620?', answers: ['The Mayflower', 'The Santa Maria', 'The Titanic', 'The Endeavour'], correctIndex: 0 },
-        { question: 'What is a baby turkey called?', answers: ['A kid', 'A poult', 'A cub', 'A calf'], correctIndex: 1 },
-        {
-          question: 'Which president made Thanksgiving a national holiday in 1863?',
-          answers: ['George Washington', 'Thomas Jefferson', 'Abraham Lincoln', 'Teddy Roosevelt'],
-          correctIndex: 2,
-        },
+        q('Which two NFL teams host a game every Thanksgiving?', ['Packers and Bears', 'Jets and Giants', 'Lions and Cowboys', 'Chiefs and Broncos'], 2),
+        q('How many points is a touchdown worth (before the extra point)?', ['3', '6', '7', '10'], 1),
+        q('Which president made Thanksgiving a national holiday in 1863?', ['George Washington', 'Thomas Jefferson', 'Abraham Lincoln', 'Teddy Roosevelt'], 2),
       ],
     },
-    { kind: 'memory', symbols: ['🍠', '🥧', '🍎', '🍂', '🌽', '🦃', '🥔', '🍗'], seconds: 90 },
-    { kind: 'catch', good: ['🌽'], bad: ['🐦'], target: 15, seconds: 30, speed: 1.3 },
+    { kind: 'memory', symbols: ['🦃', '🏈', '🛍️', '🥧', '🍂', '🌽', '🏃', '🍗'], seconds: 90 },
+    { kind: 'wordSearch', words: ['FOOTBALL', 'TURKEY', 'GRAVY', 'PILGRIM', 'HARVEST', 'PARADE'], size: 10, seconds: 180 },
     { kind: 'merge', ladder: ['🍞', '🧈', '🥣', '🍲', '🍽️', '👑'], goal: 4, seconds: 150 },
     { kind: 'match3', pieces: ['🥧', '🎂', '🍰', '🧁', '🍪'], target: 50, moves: 22 },
   ],
@@ -138,50 +143,39 @@ const GAMES: Record<Age, MiniGame[]> = {
     {
       kind: 'trivia',
       questions: [
-        {
-          question: 'Which state hosted the 1621 harvest feast often called the first Thanksgiving?',
-          answers: ['Virginia', 'New York', 'Pennsylvania', 'Massachusetts'],
-          correctIndex: 3,
-        },
+        q('Of the roughly 100 Mayflower passengers, about how many survived the first winter?', ['Almost all', 'About three quarters', 'About half', 'Only five'], 2),
+        q(
+          'Squanto spoke fluent English when the Pilgrims showed up. Why?',
+          ['He studied at Oxford', 'An English captain had kidnapped him and sold him into slavery in Spain', 'He read their brochure', 'He was a very fast learner'],
+          1,
+        ),
+        q('What was almost certainly NOT on the menu at the 1621 feast?', ['Venison', 'Wildfowl', 'Corn', 'Mashed potatoes'], 3),
       ],
     },
     { kind: 'catch', good: ['🫛', '🧅'], bad: ['🐛', '🧦'], target: 20, seconds: 30, speed: 1.6 },
-    { kind: 'speedTap', taps: 55, seconds: 10, label: 'Mash the potatoes!' },
+    { kind: 'speedTap', taps: 55, seconds: 10, label: 'Sprint!' },
     { kind: 'match3', pieces: ['🍒', '🍊', '🍎', '🍇', '🍐', '🥝'], target: 50, moves: 18 },
+    { kind: 'catch', good: ['🏷️', '📺', '💻'], bad: ['💸', '🧾'], target: 20, seconds: 30, speed: 1.7 },
+    {
+      kind: 'trivia',
+      questions: [
+        q('The Detroit Lions have hosted a Thanksgiving game almost every year since…', ['1934', '1955', '1966', '1978'], 0),
+        q('Which other team has hosted on Thanksgiving almost every year since 1966?', ['Green Bay Packers', 'Dallas Cowboys', 'New York Giants', 'Chicago Bears'], 1),
+        q(
+          'In 1939, FDR moved Thanksgiving a week earlier to give stores a longer shopping season. What did critics call it?',
+          ['Turkeygate', 'The Early Bird', 'Franksgiving', 'Fall Fiasco'],
+          2,
+        ),
+      ],
+    },
+    { kind: 'memory', symbols: ['🦃', '🏈', '🛍️', '🥧', '🍂', '🌽', '🏃', '🍗'], seconds: 60 },
     {
       kind: 'wordSearch',
-      words: ['CRANBERRY', 'CASSEROLE', 'GRATITUDE', 'PUMPKIN', 'MAYFLOWER', 'PLYMOUTH', 'HARVEST'],
+      words: ['CRANBERRY', 'CASSEROLE', 'DOORBUSTER', 'TOUCHDOWN', 'GRATITUDE', 'MAYFLOWER', 'LEFTOVERS'],
       size: 12,
       diagonal: true,
       seconds: 240,
     },
-    {
-      kind: 'trivia',
-      questions: [
-        {
-          question: 'The 1621 harvest feast at Plymouth was shared by the Pilgrims and which people?',
-          answers: ['The Cherokee', 'The Wampanoag', 'The Lakota', 'The Navajo'],
-          correctIndex: 1,
-        },
-        {
-          question: 'Which magazine editor campaigned for years to make Thanksgiving a national holiday?',
-          answers: ['Sarah Josepha Hale', 'Louisa May Alcott', 'Harriet Beecher Stowe', 'Emily Dickinson'],
-          correctIndex: 0,
-        },
-        {
-          question: 'In 1939, FDR moved Thanksgiving a week earlier. What did critics call it?',
-          answers: ['Turkeygate', 'The Early Bird', 'Franksgiving', 'Fall Fiasco'],
-          correctIndex: 2,
-        },
-        {
-          question: "Which store started New York's famous Thanksgiving Day Parade in 1924?",
-          answers: ['Gimbels', 'Sears', 'Woolworth', "Macy's"],
-          correctIndex: 3,
-        },
-      ],
-    },
-    { kind: 'memory', symbols: ['🍠', '🥧', '🍎', '🍂', '🌽', '🦃', '🥔', '🍗'], seconds: 60 },
-    { kind: 'catch', good: ['🌽'], bad: ['🐦', '🐿️'], target: 20, seconds: 30, speed: 1.7 },
     { kind: 'merge', ladder: ['🍞', '🧈', '🥣', '🍲', '🍽️', '👑'], goal: 5, seconds: 180 },
     { kind: 'match3', pieces: ['🥧', '🎂', '🍰', '🧁', '🍪', '🍩'], target: 60, moves: 20 },
   ],
@@ -192,7 +186,7 @@ type Beat = { title: string; story: (p: Prize) => string; win: string; lose: str
 const BEATS: Beat[] = [
   {
     title: 'The Empty Plate',
-    story: (p) => `Here's ${p.name}. Every dish on the table ran out the door, and it's up to you to fill this plate back up! First, a warm-up question.`,
+    story: (p) => `Here's ${p.name}. Every dish on the table ran out the door, and it's up to you to fill this plate back up! First, a little Thanksgiving history.`,
     win: "That's right! Your plate is ready. Let's go find some food.",
     lose: 'Close enough. Grab your plate and get moving!',
   },
@@ -203,10 +197,10 @@ const BEATS: Beat[] = [
     lose: 'A few bits got away, but the dish is coming home anyway.',
   },
   {
-    title: 'Potato Mountain',
-    story: (p) => `You found ${p.name}! But the potatoes are still lumpy. Mash them as fast as you can!`,
-    win: 'Smooth, fluffy, perfect. Onto the plate!',
-    lose: 'A little lumpy, but it still counts. Onward!',
+    title: 'The Turkey Trot',
+    story: (p) => `You found ${p.name}, but they just signed up for the neighborhood Turkey Trot and took off running! Sprint to catch them!`,
+    win: 'You caught them at the finish line. Onto the plate!',
+    lose: 'They beat you to the finish, then waited for you. Onto the plate!',
   },
   {
     title: 'Cranberry Bog',
@@ -215,28 +209,28 @@ const BEATS: Beat[] = [
     lose: 'Most of them made it. Good enough for Grandma!',
   },
   {
-    title: 'The Bread Basket',
-    story: (p) => `You found ${p.name}! The baker hid a secret message in the flour. Find all the words to earn your rolls.`,
-    win: 'Message found! The rolls are still warm.',
-    lose: "The baker hands you the rolls anyway. It's Thanksgiving!",
+    title: 'Black Friday Doorbuster',
+    story: (p) => `You found ${p.name}, but the bakery opened early for Black Friday and the deals are flying! Grab the doorbusters and don't waste your money.`,
+    win: 'Best deals in town, and the rolls are still warm.',
+    lose: "You got trampled a little, but the rolls are yours. It's Thanksgiving!",
   },
   {
-    title: 'The Great Turkey Chase',
-    story: (p) => `There's ${p.name}! It won't come with you until you prove you know your Thanksgiving facts.`,
-    win: 'Correct! The turkey hops onto your plate.',
-    lose: 'Not quite, but the turkey is tired of running and comes along.',
+    title: 'Thanksgiving Football',
+    story: (p) => `There's ${p.name}, glued to the football game on TV. It won't budge until you prove you know your Thanksgiving football.`,
+    win: 'Touchdown! The turkey hops onto your plate.',
+    lose: 'Flag on the play, but the turkey comes along anyway.',
   },
   {
     title: 'Sweet Potato Shuffle',
-    story: (p) => `You found ${p.name} hiding by the mailbox! They're playing a sneaky game of hide and seek. Find every matching pair.`,
+    story: (p) => `You found ${p.name} hiding by the mailbox with a pile of holiday cards. Find every matching pair to win them over.`,
     win: 'Found them all! Onto the plate they go.',
     lose: 'They were sneaky, but you caught them in the end.',
   },
   {
-    title: 'Corn Fields',
-    story: (p) => `Here's ${p.name}, but the kernels are popping off everywhere! Catch them before they hit the ground.`,
-    win: 'Every kernel caught. Nice hands!',
-    lose: 'The birds got a few. Plenty left for dinner!',
+    title: 'The Corn Maze',
+    story: (p) => `Here's ${p.name}, lost in a maze of letters. Find every hidden word to lead it out.`,
+    win: 'Out of the maze and onto your plate!',
+    lose: 'The corn found its own way out. Plenty for dinner!',
   },
   {
     title: 'Stuffing Stack',
@@ -260,7 +254,7 @@ const AGES: Record<Age, { id: string; title: string; badge: string; par: number;
     badge: 'Ages 10 and under',
     par: 150,
     penalty: 0,
-    rules: ['Stay with a grown-up the whole time.', "Losing a challenge doesn't add any time."],
+    rules: ['Stay with a grown-up the whole time.', "Losing a challenge doesn't add any time.", 'Go the wrong way and a turkey attacks!'],
   },
   teens: {
     id: 'turkey-trot-teens',
@@ -268,7 +262,7 @@ const AGES: Record<Age, { id: string; title: string; badge: string; par: number;
     badge: 'Ages 11 to 18',
     par: 100,
     penalty: 30,
-    rules: ['Look both ways at every street crossing.'],
+    rules: ['Look both ways at every street crossing.', 'Go the wrong way and a turkey attacks!'],
   },
   adults: {
     id: 'turkey-trot-adults',
@@ -276,7 +270,7 @@ const AGES: Record<Age, { id: string; title: string; badge: string; par: number;
     badge: 'Adults',
     par: 80,
     penalty: 60,
-    rules: ['Harder challenges and a tighter clock. Losing a challenge adds a full minute.'],
+    rules: ['Harder challenges and a tighter clock. Losing a challenge adds a full minute.', 'Go the wrong way and a turkey attacks!'],
   },
 };
 
@@ -309,6 +303,9 @@ function makeGame(age: Age): Game {
     timed: true,
     parMinutes: a.par,
     starColor: COLOR,
+    trailItems: ['🍴', '🍽️', '🥄', '🥤', '🧻', '🔪', '🫖', '🧂'],
+    trailName: 'table settings',
+    wrongWay: { emoji: '🦃', name: 'Turkey attack', points: -15, sound: 'turkey' },
     spotsId: SPOTS_ID,
     presetSpots: SPOTS,
     // Coins run in straight lines between tags, so give a little extra room
