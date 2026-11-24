@@ -16,7 +16,7 @@ export const LITTLE_VALLEY: Site = {
     cp4: { latitude: 37.055109, longitude: -113.540902 }, // light pole
     cp5: { latitude: 37.055686, longitude: -113.536538 }, // bench
     cp6: { latitude: 37.055812, longitude: -113.535485 }, // under the pavilion
-    // cp7: crosswalk sign
+    cp7: { latitude: 37.056093, longitude: -113.530553 }, // crosswalk sign
     cp8: { latitude: 37.0508219, longitude: -113.5224247 }, // Alumni Creamery door
     cp9: { latitude: 37.049767, longitude: -113.533923 }, // tree in the church parking lot
     boss: { latitude: 37.049262, longitude: -113.536989 }, // metal gate to the backyard
