@@ -5,11 +5,12 @@ import { ActivityIndicator, Image, Switch, Text, View } from 'react-native';
 import { POINTS, withArrow } from '../game/scoring';
 import { Game, SpotLocation, TAG_LABELS, TagCode } from '../game/types';
 import { COIN_RADIUS_M, coinsForLeg } from '../lib/coins';
+
 import { checkNearby, distanceM } from '../lib/location';
 import { cancelScan, nfcStatus, readTagCode } from '../lib/nfc';
 import { useGameSounds } from '../lib/sounds';
 import { Photos, loadPhotos } from '../lib/photos';
-import { Run, Spots, formatTime, loadSettings, loadSpots, runSeconds, spotsKey } from '../lib/storage';
+import { Run, Spots, formatTime, loadCourseSpots, loadSettings, runSeconds, spotsKey } from '../lib/storage';
 import { CacheMap, MapCache } from '../components/CacheMap';
 import { CoinAR } from '../components/CoinAR';
 import { ClueCard } from '../components/ClueCard';
@@ -58,11 +59,12 @@ export function Play({
   }, [prev, next, spots, game]);
 
   // The location callback outlives renders, so it reads the latest values here.
-  const latest = useRef({ run, coins, arrowOn, onRunChange, playCoin, playWarning });
-  latest.current = { run, coins, arrowOn, onRunChange, playCoin, playWarning };
+  const coinRadius = game.coinRadiusM ?? COIN_RADIUS_M;
+  const latest = useRef({ run, coins, arrowOn, onRunChange, playCoin, playWarning, coinRadius });
+  latest.current = { run, coins, arrowOn, onRunChange, playCoin, playWarning, coinRadius };
 
   useEffect(() => {
-    loadSpots(spotsKey(game)).then(setSpots);
+    loadCourseSpots(game).then(setSpots);
     loadPhotos(spotsKey(game)).then(setPhotos);
     const id = setInterval(() => setNow(Date.now()), 500);
     return () => {
@@ -84,7 +86,7 @@ export function Play({
           const here = { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
           setMe(here);
           const { run: r, coins: legCoins, arrowOn: arrow } = latest.current;
-          const hit = legCoins.find((c) => !r.coins.includes(c.id) && distanceM(here, c) <= COIN_RADIUS_M);
+          const hit = legCoins.find((c) => !r.coins.includes(c.id) && distanceM(here, c) <= latest.current.coinRadius);
           if (!hit) return;
           const points = hit.good ? withArrow(POINTS.coin, arrow) : POINTS.wrongWayCoin;
           latest.current.onRunChange({ ...r, coins: [...r.coins, hit.id], points: r.points + points });

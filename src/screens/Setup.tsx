@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import { Switch, TextInput, View } from 'react-native';
 import { TAG_LABELS as LABELS, TagCode } from '../game/types';
 
-// The order of the numbers on the stickers.
-const WRITE_ORDER: TagCode[] = ['cp1', 'cp2', 'cp3', 'cp4', 'cp5', 'boss', 'cp6', 'cp7', 'cp8', 'cp9'];
+const WRITE_ORDER: TagCode[] = ['cp1', 'cp2', 'cp3', 'cp4', 'cp5', 'cp6', 'cp7', 'cp8', 'cp9', 'boss'];
 import { cancelScan, nfcStatus, writeTagCode } from '../lib/nfc';
 import { Settings, loadSettings, saveSettings } from '../lib/storage';
 import { Body, Button, Card, Screen, Title, colors } from '../components/ui';

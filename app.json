@@ -7,8 +7,12 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.salemstanley.neocaching"
+      "supportsTablet": false,
+      "bundleIdentifier": "com.salemstanley.neocaching",
+      "buildNumber": "1",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.salemstanley.neocaching",

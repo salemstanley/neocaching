@@ -47,7 +47,7 @@ const STARTERS: Omit<Checkpoint, 'tag'>[] = [
     },
     winText: 'Exactly right!',
     loseText: 'Hmm, the answer was today!',
-    clue: 'The final stop awaits at Tag 5!',
+    clue: 'The final stop awaits at the Finish tag!',
   },
   {
     title: 'The Grand Finale',

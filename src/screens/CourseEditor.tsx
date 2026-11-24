@@ -5,7 +5,7 @@ import { Checkpoint, Game, MAX_TAGS, MIN_TAGS, MiniGame, MiniGameKind, SpotLocat
 import { getHere } from '../lib/location';
 import { shareCourse } from '../lib/share';
 import { Photos, loadPhotos, pickHidingPhoto } from '../lib/photos';
-import { Spots, deleteCustomCourse, loadSpots, saveCustomCourse, saveSpots, spotsKey } from '../lib/storage';
+import { Spots, deleteCustomCourse, loadCourseSpots, saveCustomCourse, saveSpots, spotsKey } from '../lib/storage';
 import { Chip, Field, Toggle, inputStyle } from '../components/form';
 import { MapPicker } from '../components/MapPicker';
 import { Body, Button, Card, Screen, Title, colors } from '../components/ui';
@@ -56,8 +56,9 @@ export function CourseEditor({
 
   const sKey = spotsKey(course);
   useEffect(() => {
-    loadSpots(sKey).then(setSpots);
+    loadCourseSpots(course).then(setSpots);
     loadPhotos(sKey).then(setPhotos);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sKey]);
 
   const takePhoto = async (tag: TagCode, from: 'camera' | 'gallery') => {

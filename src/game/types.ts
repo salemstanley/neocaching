@@ -93,6 +93,12 @@ export type Game = {
   // Street corners on the way to each tag, so coins follow the streets
   // instead of a straight line.
   bends?: Partial<Record<TagCode, SpotLocation[]>>;
+  // Where the tags are hidden, built into the course. Spots saved on the
+  // phone (in Set up) take priority.
+  presetSpots?: Partial<Record<TagCode, SpotLocation>>;
+  // How close you need to walk to a coin, in meters. Defaults to 7. Bigger is
+  // kinder when coins run in a straight line across curvy streets.
+  coinRadiusM?: number;
 };
 
 // Where each tag is stuck in the real world. Each course has its own set.
@@ -100,16 +106,17 @@ export type SpotLocation = { latitude: number; longitude: number };
 
 // The name written on each physical tag sticker, shown in the app so players
 // know which tag is which.
-// Tags 6 to 9 came later, so a 10-tag course goes Start, 1-4, 6-9, then 5 (the boss).
+// The boss tag is always the Finish. (On the original apartment stickers it's
+// the one marked 5.)
 export const TAG_LABELS: Record<TagCode, string> = {
   cp1: 'Tag "Start"',
   cp2: 'Tag 1',
   cp3: 'Tag 2',
   cp4: 'Tag 3',
   cp5: 'Tag 4',
-  cp6: 'Tag 6',
-  cp7: 'Tag 7',
-  cp8: 'Tag 8',
-  cp9: 'Tag 9',
-  boss: 'Tag 5 (final boss)',
+  cp6: 'Tag 5',
+  cp7: 'Tag 6',
+  cp8: 'Tag 7',
+  cp9: 'Tag 8',
+  boss: 'Tag "Finish" (final boss)',
 };

@@ -96,7 +96,7 @@ export const pioneerGame: Game = {
       winText: 'The surveyor tips his hat. "You know this town better than most."',
       loseText: 'The surveyor sighs and repeats the lesson. Time slips away.',
       clue:
-        'Thunder rolls and the river is rising fast! The flood is sweeping everything toward the walls where the town keeps its rubbish. Race to the outside of the nearest one. Tag 5 is where you make your stand.',
+        'Thunder rolls and the river is rising fast! The flood is sweeping everything toward the walls where the town keeps its rubbish. Race to the outside of the nearest one. The Finish tag (the sticker marked 5) is where you make your stand.',
       miniGame: {
         kind: 'trivia',
         questions: [
