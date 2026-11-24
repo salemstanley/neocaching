@@ -314,9 +314,8 @@ function makeGame(site: Site, age: Age): Game {
     badge: a.badge,
     location: site.location,
     theme: a.theme,
-    tagline: 'The Thanksgiving dishes ran away! Fill your plate on a 3.1 mile loop and capture the Piecaken.',
-    intro:
-      `Oh no! Right before dinner, every dish on ${site.family} Thanksgiving table jumped up and trotted out the door. Grab a plate, follow the trail, collect each dish, and capture the Piecaken before dinner gets cold.`,
+    tagline: 'The Thanksgiving feast ran away! Chase it down before dinner gets cold. 🦃',
+    intro: `Every dish on ${site.family} table just ran out the door! Grab a plate and go get them.`,
     startClue: site.startClue,
     ending: 'Your plate is full and the Piecaken has been captured. Happy Thanksgiving! Time to eat!',
     penaltySeconds: a.penalty,
@@ -382,9 +381,8 @@ export function quickTurkeyTrot(opts: { id: string; location: string; spotsId: s
     theme: 'Thanksgiving (short and simple)',
     badge: 'All ages',
     location: opts.location,
-    tagline: 'A short Thanksgiving dash: fill your plate at 6 tags and capture the Piecaken.',
-    intro:
-      'Oh no! Right before dinner, every dish on the Thanksgiving table jumped up and ran outside. Grab a plate, collect each dish, and capture the Piecaken before dinner gets cold.',
+    tagline: 'A quick Thanksgiving dash. Fill your plate and beat the Piecaken! 🦃',
+    intro: 'Every dish on the table just ran out the door! Grab a plate and go get them.',
     startClue: opts.startClue,
     ending: 'Your plate is full and the Piecaken has been captured. Happy Thanksgiving!',
     penaltySeconds: 0,

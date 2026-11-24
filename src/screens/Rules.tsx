@@ -1,4 +1,5 @@
-import { View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, View } from 'react-native';
 import { POINTS } from '../game/scoring';
 import { Game } from '../game/types';
 import { Body, Button, Card, Screen, Title, colors } from '../components/ui';
@@ -6,51 +7,58 @@ import { Body, Button, Card, Screen, Title, colors } from '../components/ui';
 function Row({ label, points }: { label: string; points: string }) {
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
-      <Body style={{ flex: 1 }}>{label}</Body>
-      <Body style={{ fontWeight: '800', color: points.startsWith('-') || points.startsWith('Half') ? colors.bad : colors.good }}>{points}</Body>
+      <Body style={{ flex: 1, fontSize: 15 }}>{label}</Body>
+      <Body style={{ fontSize: 15, fontWeight: '800', color: points.startsWith('-') || points === 'Half' ? colors.bad : colors.good }}>{points}</Body>
     </View>
   );
 }
 
-// How to play and how points work, shown before the clock starts.
+// A quick, fun "here's the idea" before the clock starts. The points table
+// is tucked away for anyone who wants it.
 export function Rules({ game, onStart, onBack }: { game: Game; onStart: () => void; onBack: () => void }) {
+  const [showPoints, setShowPoints] = useState(false);
   const timed = game.timed !== false;
-  const par = game.parMinutes ?? 15;
+  const trail = game.trailName ?? 'coins';
+  const goodies = game.trailItems?.slice(0, 3).join('') ?? '🪙';
+
   return (
     <Screen>
-      <Title>How to play</Title>
-      <Body style={{ color: game.starColor, fontSize: 22, fontWeight: '800' }}>{game.title}</Body>
-      {(game.location || game.badge) && <Body style={{ color: colors.muted }}>{[game.location, game.badge].filter(Boolean).join(' · ')}</Body>}
+      <Title>{game.title}</Title>
+      <Body style={{ fontSize: 19 }}>{game.tagline}</Body>
 
-      <Card>
-        <Body>1. Read the clue and find the hidden tag. There are {game.checkpoints.length} tags, and you have to find them in order.</Body>
-        <Body>2. Tap the back of your phone on the tag. You have to be standing near it.</Body>
-        <Body>3. Catch what floats up in the camera, read the story, and play the challenge.</Body>
-        <Body>
-          4. Walk the trail to the next tag. {game.trailName ? `${game.trailName[0].toUpperCase()}${game.trailName.slice(1)}` : 'Coins'} float along the right way. Tap "Look for {game.trailName ?? 'coins'}" to see where they are.
+      <Card style={{ gap: 12 }}>
+        <Body style={{ fontSize: 19 }}>🔍 Follow the clues to {game.checkpoints.length} hidden tags.</Body>
+        <Body style={{ fontSize: 19 }}>📱 Tap your phone on each one.</Body>
+        <Body style={{ fontSize: 19 }}>🎮 Win the mini-game.</Body>
+        <Body style={{ fontSize: 19 }}>
+          {goodies} Grab the {trail} along the way.
         </Body>
-        <Body>5. Find the last tag and beat the final challenge to finish!</Body>
-        {game.rules?.map((rule, i) => (
-          <Body key={i}>• {rule}</Body>
-        ))}
+        {game.wrongWay && <Body style={{ fontSize: 19 }}>{game.wrongWay.emoji} Wrong way? Watch out!</Body>}
+        <Body style={{ fontSize: 19 }}>🏆 {timed ? 'Be quick. Score big.' : 'Take your time and have fun.'}</Body>
       </Card>
 
-      <Card>
-        <Body style={{ fontWeight: '800', fontSize: 20 }}>Points</Body>
-        <Row label="Each tag you find" points={`+${POINTS.cache}`} />
-        <Row label={`Each of the ${game.trailName ?? 'coins'} on the right path`} points={`+${POINTS.coin}`} />
-        <Row
-          label={game.wrongWay ? `Going the wrong way: ${game.wrongWay.name.toLowerCase()}!` : 'Wrong-way coin (you hear a buzz)'}
-          points={`${game.wrongWay?.points ?? POINTS.wrongWayCoin}`}
-        />
-        <Row label={`Direction arrow on (${game.trailName ?? 'coins'} and tag on that stretch)`} points="Half" />
-        <Row label='"Show me the hiding spot" photo' points={`${POINTS.hint}`} />
-        {timed && <Row label={`Time bonus: each second under ${par} minutes`} points="+1" />}
-        {timed && game.penaltySeconds > 0 && <Row label="Losing a challenge adds time" points={`+${game.penaltySeconds}s`} />}
-        <Body style={{ color: colors.muted, fontSize: 14 }}>Challenges never cost points, and the arrow doesn't change them.</Body>
-      </Card>
+      <Button title={timed ? "Ready, set, go!" : "Let's go!"} onPress={onStart} />
 
-      <Button title={timed ? 'Start the clock!' : "Let's go!"} onPress={onStart} />
+      <Pressable onPress={() => setShowPoints(!showPoints)}>
+        <Body style={{ color: colors.muted, textAlign: 'center' }}>{showPoints ? 'Hide the points ▴' : 'How do points work? ▾'}</Body>
+      </Pressable>
+      {showPoints && (
+        <Card>
+          <Row label="Find a tag" points={`+${POINTS.cache}`} />
+          <Row label={`Each of the ${trail}`} points={`+${POINTS.coin}`} />
+          <Row label={game.wrongWay ? game.wrongWay.name : 'Wrong way'} points={`${game.wrongWay?.points ?? POINTS.wrongWayCoin}`} />
+          <Row label="Peek at the hiding spot" points={`${POINTS.hint}`} />
+          <Row label="Use the arrow" points="Half" />
+          {timed && <Row label={`Each second under ${game.parMinutes ?? 15} min`} points="+1" />}
+          {timed && game.penaltySeconds > 0 && <Row label="Lose a mini-game" points={`+${game.penaltySeconds}s`} />}
+          {game.rules?.map((rule, i) => (
+            <Body key={i} style={{ color: colors.muted, fontSize: 14 }}>
+              • {rule}
+            </Body>
+          ))}
+        </Card>
+      )}
+
       <Button kind="secondary" title="Back" onPress={onBack} />
     </Screen>
   );
