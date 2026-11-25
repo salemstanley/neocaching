@@ -1,4 +1,5 @@
 import { Checkpoint, Game, MiniGame, Prize, SpotLocation, TagCode } from './types';
+import { CHEF, ENDINGS, SCENES } from './turkeyStory';
 
 // Thanksgiving "Turkey Trot": a 5k loop with 10 tags, single player, in three
 // age versions. Each place it's played (a "site") brings its own tag spots and
@@ -294,7 +295,7 @@ function makeGame(site: Site, age: Age): Game {
   const a = AGES[age];
   const checkpoints: Checkpoint[] = TAGS.map((tag, i) => {
     const special = site.overrides?.[i];
-    if (special) return { tag, ...special, clue: site.clues[i] };
+    if (special) return { tag, ...special, clue: site.clues[i], scene: SCENES[age][i] };
     const beat = BEATS[i];
     const prize = PRIZES[age][i];
     return {
@@ -306,6 +307,7 @@ function makeGame(site: Site, age: Age): Game {
       loseText: beat.lose,
       clue: site.clues[i],
       miniGame: GAMES[age][i],
+      scene: SCENES[age][i],
     };
   });
   return {
@@ -331,6 +333,8 @@ function makeGame(site: Site, age: Age): Game {
     // where the street curves away from them.
     coinRadiusM: 12,
     rules: a.rules,
+    character: CHEF,
+    endings: ENDINGS[age],
     checkpoints,
   };
 }
@@ -373,6 +377,7 @@ export function quickTurkeyTrot(opts: { id: string; location: string; spotsId: s
       loseText: beat.lose,
       clue: opts.clues[i],
       miniGame: GAMES.teens[stop],
+      scene: SCENES.teens[stop],
     };
   });
   return {
@@ -393,6 +398,8 @@ export function quickTurkeyTrot(opts: { id: string; location: string; spotsId: s
     trailName: 'table settings',
     wrongWay: { emoji: '🦃', name: 'Turkey attack', points: -15, sound: 'turkey' },
     spotsId: opts.spotsId,
+    character: CHEF,
+    endings: ENDINGS.teens,
     checkpoints,
   };
 }

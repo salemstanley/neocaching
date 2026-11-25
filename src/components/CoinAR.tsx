@@ -32,22 +32,69 @@ function CoinPicture({ size }: { size: number }) {
   );
 }
 
-// Look through the camera and see the coins floating in the direction they
-// are. Turn around to find more. Walking to them still picks them up.
-export function CoinAR({ me, coins, name = 'coins', onClose }: { me: SpotLocation | null; coins: Coin[]; name?: string; onClose: () => void }) {
+// How close (in meters) you need to be to grab an item. Phone GPS wanders a
+// few meters, so this is generous: about 50 feet.
+export const GRAB_RANGE_M = 15;
+
+// Hot or cold, by how far away the nearest item is.
+export function warmth(d: number): { label: string; fill: number } {
+  const fill = Math.max(0.05, Math.min(1, 1 - (d - GRAB_RANGE_M) / (MAX_DISTANCE_M - GRAB_RANGE_M)));
+  if (d <= GRAB_RANGE_M) return { label: "You're right on it!", fill: 1 };
+  if (d <= 30) return { label: 'Hot! 🔥', fill };
+  if (d <= 60) return { label: 'Warmer 🙂', fill };
+  return { label: 'Cold ❄️', fill };
+}
+
+export function WarmthBar({ fill }: { fill: number }) {
+  return (
+    <View style={styles.bar}>
+      <View style={[styles.fill, { width: `${Math.round(fill * 100)}%`, backgroundColor: fill > 0.66 ? '#FF6B3D' : fill > 0.33 ? colors.gold : '#6FB7FF' }]} />
+    </View>
+  );
+}
+
+// Look through the camera and see the items floating in the direction they
+// are. Turn around to find more. Get close and tap Grab it!
+export function CoinAR({
+  me,
+  coins,
+  name = 'coins',
+  onGrab,
+  onClose,
+}: {
+  me: SpotLocation | null;
+  coins: Coin[];
+  name?: string;
+  onGrab: (coin: Coin) => void;
+  onClose: () => void;
+}) {
   const [permission, requestPermission] = useCameraPermissions();
   const [heading, setHeading] = useState<number | null>(null);
   const { width, height } = useWindowDimensions();
-  const spin = useRef(new Animated.Value(0)).current;
+  const bob = useRef(new Animated.Value(0)).current;
+  const pulse = useRef(new Animated.Value(0)).current;
+  const smooth = useRef<number | null>(null);
 
   useEffect(() => {
     if (permission && !permission.granted && permission.canAskAgain) requestPermission();
   }, [permission, requestPermission]);
 
+  // The compass jitters a lot, so ease toward each new reading instead of
+  // jumping. That keeps the items steady on screen.
   useEffect(() => {
     let sub: Location.LocationSubscription | undefined;
     let cancelled = false;
-    Location.watchHeadingAsync((h) => setHeading(h.trueHeading >= 0 ? h.trueHeading : h.magHeading))
+    Location.watchHeadingAsync((h) => {
+      const raw = h.trueHeading >= 0 ? h.trueHeading : h.magHeading;
+      const prev = smooth.current;
+      if (prev === null) smooth.current = raw;
+      else {
+        const diff = ((raw - prev + 540) % 360) - 180;
+        smooth.current = (prev + diff * 0.15 + 360) % 360;
+      }
+      const next = smooth.current;
+      setHeading((old) => (old === null || Math.abs(((next - old + 540) % 360) - 180) >= 1 ? next : old));
+    })
       .then((s) => (cancelled ? s.remove() : (sub = s)))
       .catch(() => {});
     return () => {
@@ -57,37 +104,58 @@ export function CoinAR({ me, coins, name = 'coins', onClose }: { me: SpotLocatio
   }, []);
 
   useEffect(() => {
-    const loop = Animated.loop(Animated.timing(spin, { toValue: 1, duration: 1600, easing: Easing.linear, useNativeDriver: true }));
-    loop.start();
-    return () => loop.stop();
-  }, [spin]);
+    const a = Animated.loop(
+      Animated.sequence([
+        Animated.timing(bob, { toValue: 1, duration: 1200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(bob, { toValue: 0, duration: 1200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      ]),
+    );
+    const b = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1, duration: 600, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0, duration: 600, useNativeDriver: true }),
+      ]),
+    );
+    a.start();
+    b.start();
+    return () => {
+      a.stop();
+      b.stop();
+    };
+  }, [bob, pulse]);
 
-  const scaleX = spin.interpolate({ inputRange: [0, 0.25, 0.5, 0.75, 1], outputRange: [1, 0.15, 1, 0.15, 1] });
+  const floatY = bob.interpolate({ inputRange: [0, 1], outputRange: [0, -10] });
+  const grow = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.12] });
 
-  const placed =
-    me && heading !== null
-      ? coins
-          .map((c) => {
-            const d = distanceM(me, c);
-            let rel = bearingDeg(me, c) - heading;
-            rel = ((rel + 540) % 360) - 180; // -180..180, 0 = straight ahead
-            return { coin: c, d, rel };
-          })
-          .filter((p) => p.d <= MAX_DISTANCE_M)
-          .sort((a, b) => b.d - a.d) // far ones first so near ones draw on top
-      : [];
-  const inView = placed.filter((p) => Math.abs(p.rel) <= HALF_VIEW + 5);
-  const toLeft = placed.filter((p) => p.rel < -HALF_VIEW - 5).length;
-  const toRight = placed.filter((p) => p.rel > HALF_VIEW + 5).length;
-  const nearest = placed.length ? Math.min(...placed.map((p) => p.d)) : null;
+  const placed = me
+    ? coins
+        .map((c) => {
+          const d = distanceM(me, c);
+          let rel = heading === null ? 999 : bearingDeg(me, c) - heading;
+          if (heading !== null) rel = ((rel + 540) % 360) - 180; // -180..180, 0 = straight ahead
+          return { coin: c, d, rel };
+        })
+        .filter((p) => p.d <= MAX_DISTANCE_M)
+        .sort((a, b) => b.d - a.d) // far ones first so near ones draw on top
+    : [];
+  const nearestAll = me && coins.length ? Math.min(...coins.map((c) => distanceM(me, c))) : null;
+  const grabbable = placed.length && placed[placed.length - 1].d <= GRAB_RANGE_M ? placed[placed.length - 1].coin : null;
+  const others = placed.filter((p) => p.coin !== grabbable);
+  const inView = others.filter((p) => Math.abs(p.rel) <= HALF_VIEW + 5);
+  const toLeft = others.filter((p) => p.rel < -HALF_VIEW - 5).length;
+  const toRight = others.filter((p) => p.rel > HALF_VIEW + 5 && p.rel <= 180).length;
 
   let status: string;
   if (!me) status = 'Finding your location…';
-  else if (heading === null) status = 'Finding which way you are facing…';
   else if (coins.length === 0) status = `No ${name} left on this stretch. Head for the next tag!`;
-  else if (placed.length === 0) status = `The ${name} are too far away to see. Keep walking toward the next tag.`;
-  else if (inView.length) status = `${inView.length} ahead! Walk to them to grab them.`;
+  else if (grabbable) status = 'Got one! Tap it to grab it!';
+  else if (heading === null) status = 'Finding which way you are facing…';
+  else if (placed.length === 0) status = `Keep walking toward the next tag to find ${name}.`;
+  else if (inView.length) status = 'Walk toward it!';
   else status = `Turn around slowly to find the ${name}.`;
+
+  const grabSymbol = (c: Coin) =>
+    c.symbol ? <Text style={{ fontSize: 150 }}>{c.symbol}</Text> : <CoinPicture size={170} />;
 
   return (
     <View style={StyleSheet.absoluteFill}>
@@ -98,12 +166,12 @@ export function CoinAR({ me, coins, name = 'coins', onClose }: { me: SpotLocatio
       )}
 
       {inView.map(({ coin, d, rel }) => {
-        const size = Math.max(36, Math.min(150, (150 * 8) / Math.max(d, 1)));
+        const size = Math.max(40, Math.min(130, (130 * 10) / Math.max(d, 1)));
         const x = width / 2 + (rel / HALF_VIEW) * (width / 2) - size / 2;
-        // Farther coins sit higher, nearer the horizon.
-        const y = height * 0.62 - (Math.min(d, 60) / 60) * height * 0.2 - size / 2;
+        // Farther items sit higher, nearer the horizon.
+        const y = height * 0.6 - (Math.min(d, 60) / 60) * height * 0.2 - size / 2;
         return (
-          <Animated.View key={coin.id} pointerEvents="none" style={{ position: 'absolute', left: x, top: y, transform: [{ scaleX }] }}>
+          <Animated.View key={coin.id} pointerEvents="none" style={{ position: 'absolute', left: x, top: y, transform: [{ translateY: floatY }] }}>
             {coin.symbol ? (
               <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ fontSize: size * 0.8 }}>{coin.symbol}</Text>
@@ -115,12 +183,19 @@ export function CoinAR({ me, coins, name = 'coins', onClose }: { me: SpotLocatio
         );
       })}
 
-      {toLeft > 0 && (
+      {/* Close enough: the item sits still in the middle, glowing. One tap grabs it. */}
+      {grabbable && (
+        <Pressable onPress={() => onGrab(grabbable)} style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
+          <Animated.View style={[styles.glow, { transform: [{ scale: grow }] }]}>{grabSymbol(grabbable)}</Animated.View>
+        </Pressable>
+      )}
+
+      {toLeft > 0 && !grabbable && (
         <View style={[styles.side, { left: 10 }]} pointerEvents="none">
           <Text style={styles.sideText}>⬅️ {toLeft}</Text>
         </View>
       )}
-      {toRight > 0 && (
+      {toRight > 0 && !grabbable && (
         <View style={[styles.side, { right: 10 }]} pointerEvents="none">
           <Text style={styles.sideText}>{toRight} ➡️</Text>
         </View>
@@ -128,12 +203,26 @@ export function CoinAR({ me, coins, name = 'coins', onClose }: { me: SpotLocatio
 
       <View style={styles.banner} pointerEvents="none">
         <Text style={styles.bannerText}>{status}</Text>
-        {nearest !== null && <Text style={styles.small}>Nearest one: about {Math.round(nearest * 3.281)} ft</Text>}
+        {nearestAll !== null && !grabbable && (
+          <>
+            <Text style={styles.small}>
+              {warmth(nearestAll).label} About {Math.round(nearestAll * 3.281)} ft away
+            </Text>
+            <WarmthBar fill={warmth(nearestAll).fill} />
+          </>
+        )}
       </View>
 
-      <Pressable onPress={onClose} style={styles.close}>
-        <Text style={styles.closeText}>Close the camera</Text>
-      </Pressable>
+      <View style={styles.bottom}>
+        {grabbable && (
+          <Pressable onPress={() => onGrab(grabbable)} style={[styles.close, { backgroundColor: colors.good }]}>
+            <Text style={[styles.closeText, { fontSize: 24 }]}>✋ Grab it!</Text>
+          </Pressable>
+        )}
+        <Pressable onPress={onClose} style={styles.close}>
+          <Text style={styles.closeText}>Close the camera</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -144,6 +233,10 @@ const styles = StyleSheet.create({
   small: { color: colors.muted, fontSize: 15, textAlign: 'center' },
   side: { position: 'absolute', top: '48%', backgroundColor: 'rgba(27,16,53,0.85)', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 14 },
   sideText: { color: colors.gold, fontSize: 22, fontWeight: '900' },
-  close: { position: 'absolute', bottom: 50, left: 40, right: 40, backgroundColor: colors.gold, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+  bottom: { position: 'absolute', bottom: 50, left: 40, right: 40, gap: 12 },
+  close: { backgroundColor: colors.gold, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+  glow: { padding: 24, borderRadius: 200, backgroundColor: 'rgba(245,184,65,0.35)', borderWidth: 4, borderColor: '#FFE9A8', shadowColor: '#F5B841', shadowOpacity: 1, shadowRadius: 30, elevation: 20 },
+  bar: { height: 12, borderRadius: 6, backgroundColor: 'rgba(255,255,255,0.2)', overflow: 'hidden', marginTop: 4 },
+  fill: { height: '100%', borderRadius: 6 },
   closeText: { color: colors.bg, fontSize: 18, fontWeight: '800' },
 });

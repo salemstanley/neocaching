@@ -12,10 +12,10 @@ export const colors = {
   bad: '#FF6B6B',
 };
 
-export function Screen({ children, scroll = true }: { children: ReactNode; scroll?: boolean }) {
+export function Screen({ children, scroll = true, scrollEnabled = true }: { children: ReactNode; scroll?: boolean; scrollEnabled?: boolean }) {
   return (
     <SafeAreaView style={styles.screen}>
-      {scroll ? <ScrollView contentContainerStyle={styles.pad}>{children}</ScrollView> : <View style={[styles.pad, { flex: 1 }]}>{children}</View>}
+      {scroll ? <ScrollView contentContainerStyle={styles.pad} scrollEnabled={scrollEnabled}>{children}</ScrollView> : <View style={[styles.pad, { flex: 1 }]}>{children}</View>}
     </SafeAreaView>
   );
 }

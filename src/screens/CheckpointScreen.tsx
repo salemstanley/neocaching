@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Checkpoint, Game } from '../game/types';
+import { Text, View } from 'react-native';
+import { Checkpoint, Game, StoryChoice } from '../game/types';
 import { Activity } from '../components/minigames/Activity';
 import { Catch } from '../components/minigames/Catch';
 import { Choice, ChoiceOutcome } from '../components/minigames/Choice';
@@ -19,15 +20,19 @@ type Phase = 'star' | 'story' | 'game' | 'result';
 export function CheckpointScreen({
   game,
   checkpoint,
+  lastPath,
   onDone,
 }: {
   game: Game;
   checkpoint: Checkpoint;
-  onDone: (won: boolean, outcome?: ChoiceOutcome) => void;
+  // The player's most recent story pick, which can change this scene.
+  lastPath?: string;
+  onDone: (won: boolean, outcome?: ChoiceOutcome, path?: string) => void;
 }) {
   const [phase, setPhase] = useState<Phase>('star');
   const [won, setWon] = useState(false);
   const [outcome, setOutcome] = useState<ChoiceOutcome>({});
+  const [picked, setPicked] = useState<StoryChoice | null>(null);
 
   if (phase === 'star') {
     return <StarAR color={game.starColor} prize={checkpoint.prize} onCaught={() => setPhase('story')} />;
@@ -40,15 +45,46 @@ export function CheckpointScreen({
   };
 
   const mg = checkpoint.miniGame;
+  const scene = checkpoint.scene;
+  const needsPick = !!scene?.choices?.length && !picked;
   return (
     <Screen>
       <Title>{checkpoint.title}</Title>
       {phase === 'story' && (
         <>
-          <Card>
-            <Body>{checkpoint.story}</Body>
-          </Card>
-          <Button title={mg.kind === 'activity' ? 'See your mission' : 'Start the challenge'} onPress={() => setPhase('game')} />
+          {scene && (
+            <Card style={{ gap: 10 }}>
+              {game.character && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <Text style={{ fontSize: 44 }}>{game.character.emoji}</Text>
+                  <Body style={{ fontWeight: '800', color: colors.gold, fontSize: 20 }}>{game.character.name}</Body>
+                </View>
+              )}
+              {lastPath && scene.ifPath?.[lastPath] && <Body style={{ fontSize: 19 }}>{scene.ifPath[lastPath]}</Body>}
+              <Body style={{ fontSize: 19 }}>{scene.text}</Body>
+            </Card>
+          )}
+          {needsPick && (
+            <>
+              <Body style={{ fontWeight: '800', textAlign: 'center' }}>What do you do?</Body>
+              {scene!.choices!.map((c) => (
+                <Button key={c.path} title={c.label} onPress={() => setPicked(c)} />
+              ))}
+            </>
+          )}
+          {picked && (
+            <Card>
+              <Body style={{ fontSize: 19 }}>{picked.reply}</Body>
+            </Card>
+          )}
+          {!needsPick && (
+            <>
+              <Card>
+                <Body>{checkpoint.story}</Body>
+              </Card>
+              <Button title={mg.kind === 'activity' ? 'See your mission' : 'Start the challenge'} onPress={() => setPhase('game')} />
+            </>
+          )}
         </>
       )}
       {phase === 'game' && mg.kind === 'trivia' && <Trivia questions={mg.questions} onDone={finishGame} />}
@@ -94,7 +130,7 @@ export function CheckpointScreen({
             <Body>{won ? checkpoint.winText : checkpoint.loseText}</Body>
           </Card>
           {checkpoint.clue && <ClueCard clue={checkpoint.clue} />}
-          <Button title="Continue" onPress={() => onDone(won, outcome)} />
+          <Button title="Continue" onPress={() => onDone(won, outcome, picked?.path)} />
         </>
       )}
     </Screen>

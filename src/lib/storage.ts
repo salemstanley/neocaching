@@ -46,6 +46,16 @@ export async function loadSpots(courseId: string): Promise<Spots> {
 export const saveSpots = (courseId: string, s: Spots) =>
   AsyncStorage.setItem(`spots:${courseId}`, JSON.stringify(s));
 
+// The walking path drawn on the map for each stretch, keyed by the tag at the
+// end of the stretch. Trail items follow it instead of a straight line.
+export type Paths = Partial<Record<TagCode, SpotLocation[]>>;
+
+export async function loadCoursePaths(course: Game): Promise<Paths> {
+  return { ...course.bends, ...(await load<Paths>(`paths:${spotsKey(course)}`, {})) };
+}
+export const savePaths = (course: Game, p: Paths) =>
+  AsyncStorage.setItem(`paths:${spotsKey(course)}`, JSON.stringify(p));
+
 // Courses made in the app's course maker.
 export const loadCustomCourses = () => loadList<Game>(KEYS.courses);
 
@@ -93,12 +103,14 @@ export type Run = {
   arrowLegs: TagCode[];
   // Tags whose hiding-spot photo the player peeked at.
   hintTags: TagCode[];
+  // Story choices made so far, in order (e.g. 'kind' or 'bold').
+  choices: string[];
 };
 
 export async function loadRun(): Promise<Run | null> {
   try {
     const raw = await AsyncStorage.getItem('run');
-    return raw ? { points: 0, coins: [], arrowLegs: [], hintTags: [], ...JSON.parse(raw) } : null;
+    return raw ? { points: 0, coins: [], arrowLegs: [], hintTags: [], choices: [], ...JSON.parse(raw) } : null;
   } catch {
     return null;
   }

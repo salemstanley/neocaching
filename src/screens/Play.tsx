@@ -5,15 +5,15 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Image, Switch, Text, View } from 'react-native';
 import { POINTS, withArrow } from '../game/scoring';
 import { Game, SpotLocation, TAG_LABELS, TagCode } from '../game/types';
-import { COIN_RADIUS_M, coinsForLeg } from '../lib/coins';
+import { COIN_RADIUS_M, Coin, coinsForLeg } from '../lib/coins';
 
 import { checkNearby, distanceM } from '../lib/location';
 import { cancelScan, nfcStatus, readTagCode } from '../lib/nfc';
 import { useGameSounds } from '../lib/sounds';
 import { Photos, loadPhotos } from '../lib/photos';
-import { Run, Spots, formatTime, loadCourseSpots, loadSettings, runSeconds, spotsKey } from '../lib/storage';
+import { Paths, Run, Spots, formatTime, loadCoursePaths, loadCourseSpots, loadSettings, runSeconds, spotsKey } from '../lib/storage';
 import { CacheMap, MapCache } from '../components/CacheMap';
-import { CoinAR } from '../components/CoinAR';
+import { CoinAR, GRAB_RANGE_M, WarmthBar, warmth } from '../components/CoinAR';
 import { ClueCard } from '../components/ClueCard';
 import { DirectionArrow } from '../components/DirectionArrow';
 import { Body, Button, Card, Screen, Title, colors } from '../components/ui';
@@ -36,6 +36,7 @@ export function Play({
   const [scanning, setScanning] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [spots, setSpots] = useState<Spots>({});
+  const [paths, setPaths] = useState<Paths>(game.bends ?? {});
   const [me, setMe] = useState<SpotLocation | null>(null);
   const [heading, setHeading] = useState<number | null>(null);
   const [showMap, setShowMap] = useState(false);
@@ -59,8 +60,8 @@ export function Play({
     const to = next && spots[next.tag];
     if (!next || !from || !to) return [];
     const items = game.trailItems;
-    return coinsForLeg(next.tag, from, to, game.bends?.[next.tag]).map((c, i) => (items?.length && c.good ? { ...c, symbol: items[i % items.length] } : c));
-  }, [prev, next, spots, game]);
+    return coinsForLeg(next.tag, from, to, paths[next.tag]).map((c, i) => (items?.length && c.good ? { ...c, symbol: items[i % items.length] } : c));
+  }, [prev, next, spots, paths, game]);
 
   // The location callback outlives renders, so it reads the latest values here.
   const coinRadius = game.coinRadiusM ?? COIN_RADIUS_M;
@@ -69,6 +70,7 @@ export function Play({
 
   useEffect(() => {
     loadCourseSpots(game).then(setSpots);
+    loadCoursePaths(game).then(setPaths);
     loadPhotos(spotsKey(game)).then(setPhotos);
     const id = setInterval(() => setNow(Date.now()), 500);
     return () => {
@@ -77,7 +79,32 @@ export function Play({
     };
   }, []);
 
-  // Follow the player's position and pick up any coins they walk over.
+  // Picks up an item: a good one the player grabbed, or a wrong-way one they
+  // walked into.
+  const collect = (hit: Coin) => {
+    const { run: r, arrowOn: arrow } = latest.current;
+    if (r.coins.includes(hit.id)) return;
+    const wrongWay = latest.current.game.wrongWay;
+    const points = hit.good ? withArrow(POINTS.coin, arrow) : wrongWay?.points ?? POINTS.wrongWayCoin;
+    latest.current.onRunChange({ ...r, coins: [...r.coins, hit.id], points: r.points + points });
+    if (hit.good) {
+      latest.current.playCoin();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    } else if (wrongWay?.sound === 'turkey') latest.current.playTurkey();
+    else latest.current.playWarning();
+    if (!hit.good && wrongWay) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
+      setAttack(true);
+    }
+    setPopup({
+      text: hit.good ? `${hit.symbol ?? '🪙'} +${points}` : wrongWay ? `${wrongWay.name}! ${points}` : `⚠️ Wrong way! ${points}`,
+      good: hit.good,
+    });
+  };
+  const collectRef = useRef(collect);
+  collectRef.current = collect;
+
+  // Follow the player's position and spring any wrong-way items they walk into.
   useEffect(() => {
     let sub: Location.LocationSubscription | undefined;
     let cancelled = false;
@@ -89,23 +116,10 @@ export function Play({
         (loc) => {
           const here = { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
           setMe(here);
-          const { run: r, coins: legCoins, arrowOn: arrow } = latest.current;
-          const hit = legCoins.find((c) => !r.coins.includes(c.id) && distanceM(here, c) <= latest.current.coinRadius);
-          if (!hit) return;
-          const wrongWay = latest.current.game.wrongWay;
-          const points = hit.good ? withArrow(POINTS.coin, arrow) : wrongWay?.points ?? POINTS.wrongWayCoin;
-          latest.current.onRunChange({ ...r, coins: [...r.coins, hit.id], points: r.points + points });
-          if (hit.good) latest.current.playCoin();
-          else if (wrongWay?.sound === 'turkey') latest.current.playTurkey();
-          else latest.current.playWarning();
-          if (!hit.good && wrongWay) {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
-            setAttack(true);
-          }
-          setPopup({
-            text: hit.good ? `${hit.symbol ?? '🪙'} +${points}` : wrongWay ? `${wrongWay.name}! ${points}` : `⚠️ Wrong way! ${points}`,
-            good: hit.good,
-          });
+          // Good items wait to be grabbed. Wrong-way ones spring on you.
+          const { run: r, coins: legCoins } = latest.current;
+          const hit = legCoins.find((c) => !c.good && !r.coins.includes(c.id) && distanceM(here, c) <= latest.current.coinRadius);
+          if (hit) collectRef.current(hit);
         },
       );
       if (cancelled) sub.remove();
@@ -154,6 +168,22 @@ export function Play({
     if (next && !hintShown) onRunChange({ ...run, hintTags: [...run.hintTags, next.tag], points: run.points + POINTS.hint });
   };
   const coinsLeft = coins.filter((c) => c.good && !run.coins.includes(c.id));
+  const nearest = me && coinsLeft.length
+    ? coinsLeft.map((c) => ({ coin: c, d: distanceM(me, c) })).sort((a, b) => a.d - b.d)[0]
+    : null;
+  const canGrab = nearest && nearest.d <= GRAB_RANGE_M ? nearest.coin : null;
+
+  // A little buzz each time you get closer to the nearest item, and a big one
+  // when it's close enough to grab.
+  const lastStep = useRef<number | null>(null);
+  const step = nearest ? (nearest.d <= GRAB_RANGE_M ? 0 : Math.ceil((nearest.d - GRAB_RANGE_M) / 8)) : null;
+  useEffect(() => {
+    const before = lastStep.current;
+    lastStep.current = step;
+    if (step === null || before === null || step >= before) return;
+    if (step === 0) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+    else if (step <= 6) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+  }, [step]);
 
   const mapCaches: MapCache[] = game.checkpoints.flatMap((cp) => {
     const spot = spots[cp.tag];
@@ -259,8 +289,20 @@ export function Play({
           </Card>
         )}
 
+        {canGrab ? (
+          <Button title={`✋ Grab the ${canGrab.symbol ?? '🪙'}!`} onPress={() => collect(canGrab)} />
+        ) : (
+          nearest && (
+            <Card style={{ gap: 6 }}>
+              <Body>
+                {nearest.coin.symbol ?? '🪙'} {warmth(nearest.d).label} About {Math.round(nearest.d * 3.281)} ft to the nearest one.
+              </Body>
+              <WarmthBar fill={warmth(nearest.d).fill} />
+            </Card>
+          )
+        )}
         {coins.length > 0 && (
-          <Button kind="secondary" title={`${game.trailItems?.[0] ?? '🪙'} Look for ${game.trailName ?? 'coins'} (${coinsLeft.length} left)`} onPress={() => setCoinView(true)} />
+          <Button kind="secondary" title={`📷 Look for ${game.trailName ?? 'coins'} (${coinsLeft.length} left)`} onPress={() => setCoinView(true)} />
         )}
 
         <Card>
@@ -288,7 +330,7 @@ export function Play({
         <Button kind="secondary" title="Back to menu" onPress={onQuit} />
       </Screen>
 
-      {coinView && <CoinAR me={me} coins={coinsLeft} name={game.trailName} onClose={() => setCoinView(false)} />}
+      {coinView && <CoinAR me={me} coins={coinsLeft} name={game.trailName} onGrab={collect} onClose={() => setCoinView(false)} />}
 
       {attack && game.wrongWay && <Attack emoji={game.wrongWay.emoji} />}
 

@@ -62,9 +62,21 @@ export type Checkpoint = {
   // What floats in the camera view at this stop instead of the star, e.g. a
   // bowl of green bean casserole.
   prize?: Prize;
+  scene?: Scene;
 };
 
 export type Prize = { emoji: string; name: string };
+
+// A short story scene with the course's recurring character, shown when a
+// stop opens. Some scenes ask the player to pick what to do; each pick has a
+// path (like 'kind' or 'bold') that changes later scenes and the ending.
+export type StoryChoice = { label: string; reply: string; path: string };
+export type Scene = {
+  text: string;
+  // An extra line that depends on the player's last pick, by path.
+  ifPath?: Record<string, string>;
+  choices?: StoryChoice[];
+};
 
 export type Game = {
   id: string;
@@ -113,6 +125,11 @@ export type Game = {
   trailName?: string;
   // What happens on a wrong-way coin instead of the buzz, e.g. a turkey attack.
   wrongWay?: { emoji: string; name: string; points: number; sound: 'buzz' | 'turkey' };
+  // The recurring story character who shows up at each stop.
+  character?: { emoji: string; name: string };
+  // Endings by the path the player picked most often ('tie' when even).
+  // Falls back to ending.
+  endings?: Record<string, string>;
 };
 
 // Where each tag is stuck in the real world. Each course has its own set.

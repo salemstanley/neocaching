@@ -5,9 +5,10 @@ import { Checkpoint, Game, MAX_TAGS, MIN_TAGS, MiniGame, MiniGameKind, SpotLocat
 import { getHere } from '../lib/location';
 import { shareCourse } from '../lib/share';
 import { Photos, loadPhotos, pickHidingPhoto } from '../lib/photos';
-import { Spots, deleteCustomCourse, loadCourseSpots, saveCustomCourse, saveSpots, spotsKey } from '../lib/storage';
+import { Paths, Spots, deleteCustomCourse, loadCoursePaths, loadCourseSpots, saveCustomCourse, savePaths, saveSpots, spotsKey } from '../lib/storage';
 import { Chip, Field, Toggle, inputStyle } from '../components/form';
 import { MapPicker } from '../components/MapPicker';
+import { PathDrawer } from '../components/PathDrawer';
 import { Body, Button, Card, Screen, Title, colors } from '../components/ui';
 
 const KIND_LABELS: Record<MiniGameKind, string> = {
@@ -62,12 +63,15 @@ export function CourseEditor({
   const [mapFor, setMapFor] = useState<TagCode | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [photos, setPhotos] = useState<Photos>({});
+  const [paths, setPaths] = useState<Paths>({});
+  const [drawingPaths, setDrawingPaths] = useState(false);
   const editable = !!course.custom;
   const firstRender = useRef(true);
 
   const sKey = spotsKey(course);
   useEffect(() => {
     loadCourseSpots(course).then(setSpots);
+    loadCoursePaths(course).then(setPaths);
     loadPhotos(sKey).then(setPhotos);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sKey]);
@@ -141,6 +145,21 @@ export function CourseEditor({
     return s ? [{ ...s, label: TAG_LABELS[cp.tag] }] : [];
   });
 
+  if (drawingPaths) {
+    return (
+      <PathDrawer
+        course={course}
+        spots={spots}
+        paths={paths}
+        onChange={(p) => {
+          setPaths(p);
+          savePaths(course, p);
+        }}
+        onClose={() => setDrawingPaths(false)}
+      />
+    );
+  }
+
   return (
     <Screen>
       <Title>{editable ? 'Edit course' : course.title}</Title>
@@ -192,6 +211,12 @@ export function CourseEditor({
         </Body>
       )}
       {message && <Body style={{ color: colors.gold }}>{message}</Body>}
+
+      <Card>
+        <Body style={{ fontWeight: '800' }}>🗺️ Walking paths</Body>
+        <Body style={{ color: colors.muted, fontSize: 14 }}>Draw the way people should walk between tags, and the goodies will follow it.</Body>
+        <Button title="Draw the walking paths" onPress={() => setDrawingPaths(true)} />
+      </Card>
 
       {course.checkpoints.map((cp, i) => {
         const spot = spots[cp.tag];
