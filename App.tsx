@@ -5,6 +5,7 @@ import { colors } from './src/components/ui';
 import { StarAR } from './src/components/StarAR';
 import { BUILT_IN_GAMES, findGame } from './src/game/games';
 import { POINTS, timeBonus, withArrow } from './src/game/scoring';
+import { endingFor } from './src/game/story';
 import { copyCourse, newCourse } from './src/game/template';
 import { Game, TagCode } from './src/game/types';
 import {
@@ -63,11 +64,11 @@ export default function App() {
   const game: Game | undefined = run ? findGame(courses, run.gameId) : undefined;
 
   const startGame = (g: Game) => {
-    setRun({ gameId: g.id, startedAt: Date.now(), penaltySeconds: 0, done: [], points: 0, coins: [], arrowLegs: [], hintTags: [] });
+    setRun({ gameId: g.id, startedAt: Date.now(), penaltySeconds: 0, done: [], points: 0, coins: [], arrowLegs: [], hintTags: [], choices: [] });
     setView({ name: 'play' });
   };
 
-  const checkpointDone = (tag: TagCode, won: boolean, outcome: ChoiceOutcome = {}) => {
+  const checkpointDone = (tag: TagCode, won: boolean, outcome: ChoiceOutcome = {}, path?: string) => {
     if (!run || !game) return;
     // Finding the cache scores points whether or not the mini-game is won.
     const earned = run.points + withArrow(POINTS.cache, run.arrowLegs.includes(tag)) + (outcome.bonus ?? 0);
@@ -76,6 +77,7 @@ export default function App() {
     const next: Run = {
       ...run,
       done: [...run.done, tag],
+      choices: path ? [...(run.choices ?? []), path] : run.choices ?? [],
       points: lostIt ? 0 : earned,
       // Leaving the ice cream shop early isn't a lost challenge, so no time penalty.
       penaltySeconds: run.penaltySeconds + (won || lostIt ? 0 : game.penaltySeconds) - (outcome.timeCredit ?? 0),
@@ -106,11 +108,19 @@ export default function App() {
     screen = <Play game={game} run={run} onRunChange={setRun} onCheckpoint={(tag) => setView({ name: 'checkpoint', tag })} onQuit={home} />;
   } else if (view.name === 'checkpoint' && game) {
     const checkpoint = game.checkpoints.find((c) => c.tag === view.tag)!;
-    screen = <CheckpointScreen game={game} checkpoint={checkpoint} onDone={(won, outcome) => checkpointDone(view.tag, won, outcome)} />;
+    screen = (
+      <CheckpointScreen
+        game={game}
+        checkpoint={checkpoint}
+        lastPath={run?.choices?.[run.choices.length - 1]}
+        onDone={(won, outcome, path) => checkpointDone(view.tag, won, outcome, path)}
+      />
+    );
   } else if (view.name === 'finish' && game) {
     screen = (
       <Finish
         game={game}
+        ending={endingFor(game, run?.choices ?? [])}
         seconds={view.seconds}
         points={view.points}
         bonus={view.bonus}

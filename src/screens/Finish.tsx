@@ -6,6 +6,7 @@ import { Body, Button, Card, Screen, Title, colors } from '../components/ui';
 
 export function Finish({
   game,
+  ending,
   seconds,
   points,
   bonus,
@@ -13,6 +14,7 @@ export function Finish({
   onSave,
 }: {
   game: Game;
+  ending: string;
   seconds: number;
   points: number;
   bonus: number;
@@ -24,7 +26,7 @@ export function Finish({
     <Screen>
       <Title>You did it!</Title>
       <Card>
-        <Body>{game.ending}</Body>
+        <Body style={{ fontSize: 19 }}>{ending}</Body>
       </Card>
       <Body style={{ fontSize: 22, textAlign: 'center' }}>Your score</Body>
       <Body style={{ fontSize: 52, fontWeight: '800', textAlign: 'center', color: colors.gold }}>
