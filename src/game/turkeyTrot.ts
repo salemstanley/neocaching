@@ -1,4 +1,4 @@
-import { Checkpoint, Game, MiniGame, Prize, SpotLocation, TagCode } from './types';
+import { Checkpoint, Game, MiniGame, Prize, SpotLocation, TagCode, tagsForCount } from './types';
 import { CHEF, ENDINGS, SCENES } from './turkeyStory';
 
 // Thanksgiving "Turkey Trot": a 5k loop with 10 tags, single player, in three
@@ -16,7 +16,12 @@ export type Site = {
   town: string;
   spots: Partial<Record<TagCode, SpotLocation>>;
   startClue: string;
-  clues: string[]; // 9 clues: after each stop, where the next tag is
+  clues: string[]; // after each stop, where the next tag is (one fewer than the stops)
+  // Which of the 10 story stops to use, in order (0 = Start, 9 = the
+  // Piecaken). Leave out for all 10. Tags are Start, Tag 1, 2... then Finish.
+  stops?: number[];
+  // Minutes for the time bonus, by age, for shorter courses.
+  par?: Record<Age, number>;
   // Stops that work differently here, by position (0 = Start), for every age.
   overrides?: Record<number, { title: string; prize: Prize; story: string; winText: string; loseText: string; miniGame: MiniGame }>;
 };
@@ -293,11 +298,14 @@ const AGES: Record<Age, { suffix: string; title: string; theme: string; badge: s
 
 function makeGame(site: Site, age: Age): Game {
   const a = AGES[age];
-  const checkpoints: Checkpoint[] = TAGS.map((tag, i) => {
-    const special = site.overrides?.[i];
-    if (special) return { tag, ...special, clue: site.clues[i], scene: SCENES[age][i] };
-    const beat = BEATS[i];
-    const prize = PRIZES[age][i];
+  const stops = site.stops ?? TAGS.map((_, i) => i);
+  const tags = tagsForCount(stops.length);
+  const checkpoints: Checkpoint[] = stops.map((stop, i) => {
+    const tag = tags[i];
+    const special = site.overrides?.[stop];
+    if (special) return { tag, ...special, clue: site.clues[i], scene: SCENES[age][stop] };
+    const beat = BEATS[stop];
+    const prize = PRIZES[age][stop];
     return {
       tag,
       title: beat.title,
@@ -306,8 +314,8 @@ function makeGame(site: Site, age: Age): Game {
       winText: beat.win,
       loseText: beat.lose,
       clue: site.clues[i],
-      miniGame: GAMES[age][i],
-      scene: SCENES[age][i],
+      miniGame: GAMES[age][stop],
+      scene: SCENES[age][stop],
     };
   });
   return {
@@ -322,7 +330,7 @@ function makeGame(site: Site, age: Age): Game {
     ending: 'Your plate is full and the Piecaken has been captured. Happy Thanksgiving! Time to eat!',
     penaltySeconds: a.penalty,
     timed: true,
-    parMinutes: a.par,
+    parMinutes: site.par?.[age] ?? a.par,
     starColor: COLOR,
     trailItems: ['🍴', '🍽️', '🥄', '🥤', '🧻', '🔪', '🫖', '🧂'],
     trailName: 'table settings',
@@ -343,9 +351,40 @@ export function turkeyTrotFor(site: Site): Game[] {
   return [makeGame(site, 'kids'), makeGame(site, 'teens'), makeGame(site, 'adults')];
 }
 
+// The short Thanksgiving Day course (2026-11-26): the front porch, 4 tags
+// heading south down the road, then back to the Finish by the basketball hoop.
+// About half a mile. Spots are from Salem's phone.
+const PAINTED_HILLS_SHORT_SPOTS: Partial<Record<TagCode, SpotLocation>> = {
+  cp1: { latitude: 45.6539464, longitude: -111.0106156 }, // front porch
+  cp2: { latitude: 45.6534274, longitude: -111.0105973 },
+  cp3: { latitude: 45.6522036, longitude: -111.0100587 },
+  cp4: { latitude: 45.6510661, longitude: -111.0099201 },
+  cp5: { latitude: 45.6499468, longitude: -111.0099599 },
+  boss: { latitude: 45.653763, longitude: -111.010587 }, // basketball hoop
+};
+
 export const PAINTED_HILLS: Site = {
   // Kept as 'turkey-trot' so spots, photos and scores saved before stay put.
   idPrefix: 'turkey-trot',
+  location: 'Stanley - Painted Hills',
+  family: "the Stanleys'",
+  town: 'Bozeman',
+  spots: PAINTED_HILLS_SHORT_SPOTS,
+  stops: [0, 1, 2, 3, 5, 9],
+  par: { kids: 45, teens: 35, adults: 30 },
+  startClue: 'Your first tag is on the front porch. Tap it to grab your plate!',
+  clues: [
+    'Walk down the street about 190 feet. Tag 1 is hiding along the way.',
+    'Keep going down the road about 470 feet to Tag 2.',
+    'Keep heading down the road about 420 feet to Tag 3.',
+    'One more! Go about 410 feet farther down the road to Tag 4.',
+    "Head home! The Piecaken is waiting at the Finish tag by the basketball hoop at the Stanleys' house.",
+  ],
+};
+
+// The original 10-tag, 3.1-mile loop, kept in case it's wanted again.
+export const PAINTED_HILLS_5K: Site = {
+  idPrefix: 'turkey-trot-5k',
   location: 'Stanley - Painted Hills 5k',
   family: "the Stanleys'",
   town: 'Bozeman',
