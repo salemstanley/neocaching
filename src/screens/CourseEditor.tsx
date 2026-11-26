@@ -176,7 +176,6 @@ export function CourseEditor({
           <Field label="Course name" value={course.title} onChange={(title) => set({ title })} />
           <Field label="One-line description" value={course.tagline} onChange={(tagline) => set({ tagline })} />
           <Field label="Opening story" value={course.intro} onChange={(intro) => set({ intro })} multiline />
-          <Field label="Clue to the Start tag" value={course.startClue} onChange={(startClue) => set({ startClue })} multiline />
           <Field label="Ending story" value={course.ending} onChange={(ending) => set({ ending })} multiline />
           <Body style={{ color: colors.muted, fontSize: 14 }}>How many tags? ({MIN_TAGS} to {MAX_TAGS}, the last one is the final boss)</Body>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -221,7 +220,6 @@ export function CourseEditor({
       {course.checkpoints.map((cp, i) => {
         const spot = spots[cp.tag];
         const isOpen = open === cp.tag;
-        const isLast = i === course.checkpoints.length - 1;
         return (
           <Card key={cp.tag}>
             <Pressable onPress={() => setOpen(isOpen ? null : cp.tag)}>
@@ -253,6 +251,20 @@ export function CourseEditor({
                     others={savedSpots.filter((s) => s.label !== TAG_LABELS[cp.tag])}
                     onPick={(s) => setSpot(cp.tag, s)}
                   />
+                )}
+
+                {editable ? (
+                  <Field
+                    label={`🔍 Clue: how do players find ${TAG_LABELS[cp.tag]}? Say where it's hidden.`}
+                    value={(i === 0 ? course.startClue : course.checkpoints[i - 1].clue) ?? ''}
+                    onChange={(clue) => (i === 0 ? set({ startClue: clue }) : setStop(course.checkpoints[i - 1].tag, { clue }))}
+                    placeholder="e.g. Find the big pine tree by the mailbox. The tag is on the back of the trunk."
+                    multiline
+                  />
+                ) : (
+                  <Body style={{ color: colors.muted, fontSize: 14 }}>
+                    🔍 Clue: {(i === 0 ? course.startClue : course.checkpoints[i - 1].clue) ?? ''} (To write your own clues, make an editable copy.)
+                  </Body>
                 )}
 
                 <Body style={{ fontWeight: '700' }}>Hiding-spot photo</Body>
@@ -302,14 +314,6 @@ export function CourseEditor({
                     <Field label="Message when they finish" value={cp.winText} onChange={(winText) => setStop(cp.tag, { winText })} multiline />
                     {cp.miniGame.kind !== 'activity' && (
                       <Field label="Message if they lose" value={cp.loseText} onChange={(loseText) => setStop(cp.tag, { loseText })} multiline />
-                    )}
-                    {!isLast && (
-                      <Field
-                        label={`Clue to ${TAG_LABELS[course.checkpoints[i + 1].tag]}`}
-                        value={cp.clue ?? ''}
-                        onChange={(clue) => setStop(cp.tag, { clue })}
-                        multiline
-                      />
                     )}
                   </>
                 )}
