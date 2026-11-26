@@ -33,8 +33,8 @@ function CoinPicture({ size }: { size: number }) {
 }
 
 // How close (in meters) you need to be to grab an item. Phone GPS wanders a
-// few meters, so this is generous: about 50 feet.
-export const GRAB_RANGE_M = 15;
+// few meters, so this allows a little room: 30 feet.
+export const GRAB_RANGE_M = 9.144;
 
 // Hot or cold, by how far away the nearest item is.
 export function warmth(d: number): { label: string; fill: number } {
