@@ -366,7 +366,7 @@ const PAINTED_HILLS_SHORT_SPOTS: Partial<Record<TagCode, SpotLocation>> = {
 export const PAINTED_HILLS: Site = {
   // Kept as 'turkey-trot' so spots, photos and scores saved before stay put.
   idPrefix: 'turkey-trot',
-  location: 'Stanley - Painted Hills',
+  location: 'Stanley 2026 Turkey Trot',
   family: "the Stanleys'",
   town: 'Bozeman',
   spots: PAINTED_HILLS_SHORT_SPOTS,
