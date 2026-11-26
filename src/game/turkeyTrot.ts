@@ -372,13 +372,13 @@ export const PAINTED_HILLS: Site = {
   spots: PAINTED_HILLS_SHORT_SPOTS,
   stops: [0, 1, 2, 3, 5, 9],
   par: { kids: 45, teens: 35, adults: 30 },
-  startClue: 'Your first tag is on the front porch. Tap it to grab your plate!',
+  startClue: 'Your first tag is on the front porch, hiding behind a plant. Tap it to grab your plate!',
   clues: [
-    'Walk down the street about 190 feet. Tag 1 is hiding along the way.',
-    'Keep going down the road about 470 feet to Tag 2.',
-    'Keep heading down the road about 420 feet to Tag 3.',
-    'One more! Go about 410 feet farther down the road to Tag 4.',
-    "Head home! The Piecaken is waiting at the Finish tag by the basketball hoop at the Stanleys' house.",
+    "Head to the Stanleys' mailbox. Tag 1 is on the mailbox.",
+    'Walk down the road to the green mailbox for 241. Tag 2 is on it.',
+    'Keep going and look for an aspen tree. Tag 3 is on one of its branches.',
+    "This is the turnaround! Find the sign for Cook Street. Tag 4 is on the sign.",
+    "Head home! The Piecaken is waiting at the Stanleys' house. The Finish tag is on the house near the basketball hoop.",
   ],
 };
 
